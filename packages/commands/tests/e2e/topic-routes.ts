@@ -100,6 +100,12 @@ export const ADVISOR_ROUTES: E2eRouteExports = {
   "advisor recommend": "advisorRecommend",
 };
 
+export const MODEL_ROUTES: E2eRouteExports = {
+  "model list": "modelList",
+  "model search": "modelSearch",
+  "model code": "modelCode",
+};
+
 export const QUOTA_ROUTES: E2eRouteExports = {
   "quota list": "quotaList",
   "quota update": "quotaUpdate",
@@ -107,6 +113,42 @@ export const QUOTA_ROUTES: E2eRouteExports = {
   "quota request": "quotaUpdate",
   "quota history": "quotaHistory",
   "quota check": "quotaCheck",
+};
+
+export const MONITOR_ROUTES: E2eRouteExports = {
+  "monitor overview": "monitorOverview",
+  "monitor models": "monitorModels",
+  "monitor metrics": "monitorMetrics",
+  "monitor errors": "monitorErrors",
+  "monitor delivery status": "monitorDeliveryStatus",
+  "monitor delivery enable": "monitorDeliveryEnable",
+};
+
+export const LOG_ROUTES: E2eRouteExports = {
+  "log list": "logList",
+  "log get": "logGet",
+  "log count": "logCount",
+  "log status": "logStatus",
+  "log enable": "logEnable",
+  "log disable": "logDisable",
+  "log trace list": "logTraceList",
+  "log trace get": "logTraceGet",
+  "log trace stats": "logTraceStats",
+};
+
+export const ALERT_ROUTES: E2eRouteExports = {
+  "alert metrics": "alertMetrics",
+  "alert template list": "alertTemplateList",
+  "alert template create": "alertTemplateCreate",
+  "alert template update": "alertTemplateUpdate",
+  "alert template delete": "alertTemplateDelete",
+  "alert list": "alertList",
+  "alert create": "alertCreate",
+  "alert update": "alertUpdate",
+  "alert delete": "alertDelete",
+  "alert enable": "alertEnable",
+  "alert disable": "alertDisable",
+  "alert history": "alertHistory",
 };
 
 export const PERMISSION_ROUTES: E2eRouteExports = {

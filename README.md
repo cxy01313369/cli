@@ -116,6 +116,7 @@ Once installed, just describe your task to your AI Agent — no need to assemble
 | Managed Agent            | "Create a Managed Agent that can generate short-film storyboards and videos."     |
 | Image & video generation | "Generate an image of a cat in a spacesuit on Mars, then turn it into a video."   |
 | Usage & quota            | "Show my recent model usage, free-tier quota, and rate limits."                   |
+| Monitoring & alerts      | "Show my model call stats, failures and logs, and create an alert rule."          |
 | Model selection          | "Recommend a model for image understanding and customer support."                 |
 | About Bailian CLI        | "Tell me what Bailian CLI can do for me, and suggest how to use it for my needs." |
 
@@ -139,7 +140,7 @@ bl auth login --config token-plan --api-key sk-sp-xxxxx
 
 ### Console Login (OAuth)
 
-Required for console capability commands (model list, app list, MCP list, workspace, usage queries, rate-limit increases, direct console calls). Opens the Bailian console in your browser to sign in.
+Required for console capability commands (app list, MCP list, workspace, usage queries, rate-limit increases, direct console calls). Opens the Bailian console in your browser to sign in. The model catalog commands (`bl model list` / `search` / `code`) read a public endpoint and need no login.
 
 ```bash
 bl auth login --console
