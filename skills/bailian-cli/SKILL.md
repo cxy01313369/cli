@@ -125,4 +125,4 @@ schema-export commands.
 - `bl file upload` and `bl pipeline run` are steps inside a Bailian workflow; do not use them to capture generic "upload this file" or "run a pipeline" requests.
 - `bl managed-agent apply` / `destroy` mutate remote resources and only execute with `--yes`; run `plan` first and show the diff before confirming a mutation.
 - When a matched `bl` command accepts a file URL, pass local paths directly; never require the user to host the file first.
-- Console login → always `--console-site domestic|international`; see [`../bailian-protocol/assets/setup.md`](../bailian-protocol/assets/setup.md#console-site-selection).
+- Console login → use `bl auth login --console` for China; add `--console-site international` for the international site. It may create an ordinary API Key. Token Plan and other subscription plans must use `bl auth login --api-key <key>`. See [`../bailian-protocol/assets/setup.md`](../bailian-protocol/assets/setup.md#authentication).
