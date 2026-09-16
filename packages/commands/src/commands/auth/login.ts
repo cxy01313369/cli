@@ -1,7 +1,6 @@
 import {
   defineCommand,
   generateCLIAccessToken,
-  getApiKeyLoginKind,
   getModelProfilePreset,
   normalizeModelBaseUrl,
 } from "bailian-cli-core";
@@ -171,7 +170,6 @@ export default defineCommand({
       emitBare("Would validate and save API key.");
       return;
     }
-    const apiKeyKind = getApiKeyLoginKind(key);
     const stored = store.stored();
     const validation = await validateApiKey(deps, key, {
       explicitBaseUrl: baseUrl,
@@ -179,7 +177,7 @@ export default defineCommand({
       workspaceId: settings.workspaceId,
     });
     const profilePreset = getModelProfilePreset(
-      apiKeyKind === "token-plan" ? "token-plan" : undefined,
+      validation.kind === "token-plan" ? "token-plan" : undefined,
     );
     await persistApiKey(deps, key, {
       persistBaseUrl: validation.baseUrl,
