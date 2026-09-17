@@ -6,6 +6,112 @@
 
 [English](CHANGELOG.md) · [README](README.zh.md) · [参与贡献](CONTRIBUTING.zh.md)
 
+## [1.25.0] - 2026-09-14
+
+### 新增
+
+- **Token Plan harness 权益额度** —— `bl token-plan harness-quota` 查看 Token Plan harness 权益额度用量（Console 认证），联合 harness 列表与已发放权益，展示已用/总额度、使用比例和重置时间；待发放权益的 harness 以「发放中」状态列出。
+- 通过 `--type official_tool|infrastructure` 筛选 harness 列表；支持额度框输出或 `--output json`。
+
+## [1.24.0] - 2026-09-11
+
+### 新增
+
+- Sandbox 实例与模版生命周期命令，支持自动轮询构建状态和 `--async` 异步提交。
+- `bl sandbox official-images` 与模版 `--image` 参数，内置代码解释器、浏览器和全能型镜像预设。
+- `bl sandbox file upload` 使用 `source=sandbox_template` 上传模版挂载文件，返回的 File ID 可用于 `mntConfig`。
+- Sandbox 复用 `--base-url`、环境变量和 Profile 配置，未配置时通过工作空间拼接接入地址。
+- 独立的 `bailian-sandbox` Skill，提供命令参考和实例连接指南。
+
+### 修复
+
+- 模版构建轮询失败时保留已提交的 `templateID` 和 `buildID`，便于先查询已有构建，避免重复提交。
+
+### 安全
+
+- Sandbox REST 调用使用百炼 Bearer 鉴权，不依赖 E2B SDK 或 E2B API Key；连接凭据和 dry-run 环境变量默认脱敏。
+
+## [1.23.0] - 2026-09-10
+
+### 新增
+
+- **Profile 级水印控制** —— 可通过 `bl config set --key watermark --value true|false` 设置图片生成与编辑、视频生成与编辑以及参考生视频命令的默认水印行为。
+- **ASR 准确率增强** —— `bl speech recognize` 现支持通过 `--vocabulary` 传入即时热词、通过 `--context` 增强上下文词表，以及通过 `--vocabulary-id` 使用适用于对应 ASR 模型的预编译热词表。
+- **语音热词表管理** —— 新增 `bl speech vocabulary create|list|get|update|delete`，用于管理可复用的预编译热词表。
+
+## [1.22.0] - 2026-09-08
+
+### 变更
+
+- **项目初始化** —— `managed-agent project init` 默认创建 `./managed-agent` 子目录；如需原地初始化，请使用 `--project .`。**(BREAKING)**
+- **Build 确认机制** —— `managed-agent project build` 无需确认，并且不再接受 `--yes`。使用 `--dry-run` 可只读预览；Publish 仍需显式确认。**(BREAKING)**
+- **Managed Agent SDK** —— 升级至 `0.7.1`。Build 自动关联 Agent 目录下已启用的资源，保留显式引用、Skill 版本和 File 挂载路径；Environment 或 Vault 选择存在歧义时，在写入前报错。
+
+### 修复
+
+- **项目诊断** —— 提供可操作的项目根目录提示，并展示 Build 校验失败的具体原因。
+- **YAML 初始化路径** —— 创建成功及文件已存在的错误信息均展示 YAML 绝对路径。
+
+### 内部
+
+- 补充项目初始化和 Build 回归覆盖，移除本地闭环 E2E 测试中过时的 Build 确认参数。
+
+## [1.21.0] - 2026-09-07
+
+### 新增
+
+- **Managed Agent 目录项目** —— 支持初始化、校验、构建和发布本地项目，按 Agent 组织资源配置，并提供资源示例。
+- **本地项目版本管理** —— 无需 Git 即可启停快照版本管理、查看和预览历史，以及恢复项目文件。
+- **项目 Workbench** —— 在浏览器中编辑资源、审阅变更、发布更新和管理本地版本。
+
+### 变更
+
+- **Playground 版本选择** —— 启动前查询 npm，复用版本一致的本地安装，否则按需下载最新版；保留显式版本和启动文件覆盖。
+- **Managed Agent SDK** —— 升级至 `0.7.0`，通过 SDK 子路径复用项目目录和版本服务。
+
+## [1.20.0] - 2026-09-03
+
+> Managed Agent 现在同时提供 YAML-first 基础设施管理与百炼 AgentStudio 资源、运行时 API 操作。
+
+### 新增
+
+- **Managed Agent API 命令** —— 新增 Agent、Environment、Skill、Vault、Deployment、Session 和 File 的列表、详情、搜索、版本、上传、下载、运行、暂停、归档、事件及诊断等操作。
+- **基于 YAML 的单资源创建** —— `agent create`、`environment create`、`skill create`、`vault create`、`vault credential create` 和 `deployment create` 会更新 `agents.yaml`，并且只 Apply 目标资源，不受无关资源 Drift 阻塞。
+- **Agent Skill 挂载** —— 创建 Agent 时支持引用已有的自定义或官方 Skill ID，也支持本地 Skill 目录和 ZIP 文件。
+
+### 变更
+
+- **Managed Agent CLI 限定为百炼 Provider** —— `bl managed-agent` 现在只面向百炼，移除 Provider 选择参数，并拒绝包含其他 Provider 的配置。
+- **运行时变更增加确认** —— Deployment 运行/暂停/恢复、Session 归档/删除以及 File 删除操作需要显式进行高风险确认。
+
+### 修复
+
+- **Managed Agent 错误输出** —— Apply 和单资源创建失败时会保留底层 Provider 的具体诊断，不再只显示 `Apply failed.`。
+
+### 安全
+
+- 凭证仅在内存中解析并从进程环境清除；Vault Credential 声明通过环境变量引用 Secret，不会持久化明文。
+
+## [1.19.0] - 2026-09-01
+
+### 新增
+
+- **`bl quota delete`** — 清除指定模型的全部自定义 QPM/TPM 限流配置。
+
+### 变更
+
+- **高风险操作确认** — 高风险命令会在 `--help` 和 Skill 命令参考中展示风险说明。未传入 `--yes` 时，高风险操作不会执行；JSON 输出会返回退出码 `7` 和 `error.type: "requires_confirmation"`。确认后可添加 `--yes` 重新执行；`--dry-run` 无需确认。
+
+## [1.18.2] - 2026-09-01
+
+### 变更
+
+- **删除与清除操作增加确认** —— `bl finetune delete`、`bl deploy delete`、`bl dataset delete` 和 `bl quota update --delete` 现在会在执行前要求确认；非交互场景请传入 `--yes`。
+
+### 修复
+
+- **Skill 安装可靠性** —— `bl skill init` 现在会重试临时性网络故障；备份清理受阻时，已完成的 Skill 更新不再被误报为失败。
+
 ## [1.18.1] - 2026-08-28
 
 ### 已移除
