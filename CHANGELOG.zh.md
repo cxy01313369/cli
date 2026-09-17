@@ -6,6 +6,17 @@
 
 [English](CHANGELOG.md) · [README](README.zh.md) · [参与贡献](CONTRIBUTING.zh.md)
 
+## [1.26.0] - 2026-09-17
+
+### 变更
+
+- **简化认证方式** —— 默认推荐使用控制台登录，需要时可自动创建普通 API Key。已有普通 API Key 和 Token Plan 订阅 Key 统一使用 `bl auth login --api-key <API_KEY>` 登录。
+- **API Key 自动校验与地域识别** —— API Key 会在保存前进行校验，CLI 自动选择可用地域，并在适用时完成 Token Plan 配置。
+
+### 修复
+
+- **视频任务诊断** —— 视频任务失败时展示服务端错误码、错误信息、请求 ID 和调度时间；下载失败时展示实际失败原因，不再只提示任务未完成。
+
 ## [1.25.0] - 2026-09-14
 
 ### 新增
