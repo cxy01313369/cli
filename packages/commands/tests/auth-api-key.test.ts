@@ -20,6 +20,7 @@ const settings: Settings = {
   verbose: false,
   quiet: false,
   dryRun: false,
+  watermark: true,
   telemetry: false,
 };
 
