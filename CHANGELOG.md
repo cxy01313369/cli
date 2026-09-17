@@ -6,6 +6,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 [中文版](CHANGELOG.zh.md) · [README](README.md) · [Contributing](CONTRIBUTING.md)
 
+## [1.26.0] - 2026-09-17
+
+### Changed
+
+- **Simplified authentication** — Console login is now the recommended default and can create an ordinary API key when needed. Existing ordinary API keys and Token Plan subscription keys use the same `bl auth login --api-key <API_KEY>` command.
+- **Automatic API key validation and endpoint selection** — API keys are validated before being saved. The CLI automatically selects an available regional endpoint and applies the appropriate Token Plan configuration when applicable.
+
+### Fixed
+
+- **Video task diagnostics** — Failed video tasks now expose the service error code, message, request ID, and scheduling time; downloads show the actual failure detail instead of only an incomplete status.
+
 ## [1.25.0] - 2026-09-14
 
 ### Added
