@@ -27,7 +27,7 @@ describe("e2e: speech list-voices", () => {
     expect(stderr).toMatch(/recognize|--url|audio|model/i);
   });
 
-  // --list-voices reads the local catalog; no API key needed
+  // --list-voices 只读本地目录，但 auth: apiKey 在 run() 前仍要求凭证
   test("【qwen-audio-3.0-tts-plus】获取音色列表", async () => {
     const { stdout, stderr, exitCode } = await runCommandE2e(SPEECH_ROUTES, [
       "speech",
@@ -35,6 +35,8 @@ describe("e2e: speech list-voices", () => {
       "--list-voices",
       "--model",
       "qwen-audio-3.0-tts-plus",
+      "--api-key",
+      "sk-e2e-placeholder",
     ]);
     expect(exitCode, stderr).toBe(0);
     expect(stdout).toContain("longanlingxin");
@@ -48,6 +50,8 @@ describe("e2e: speech list-voices", () => {
       "--list-voices",
       "--model",
       "qwen-audio-3.0-tts-flash",
+      "--api-key",
+      "sk-e2e-placeholder",
     ]);
     expect(exitCode, stderr).toBe(0);
     expect(stdout).toContain("longanfengyue");
