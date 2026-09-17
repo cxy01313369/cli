@@ -26,6 +26,33 @@ describe("e2e: speech list-voices", () => {
     expect(exitCode, stderr).toBe(0);
     expect(stderr).toMatch(/recognize|--url|audio|model/i);
   });
+
+  // --list-voices reads the local catalog; no API key needed
+  test("【qwen-audio-3.0-tts-plus】获取音色列表", async () => {
+    const { stdout, stderr, exitCode } = await runCommandE2e(SPEECH_ROUTES, [
+      "speech",
+      "synthesize",
+      "--list-voices",
+      "--model",
+      "qwen-audio-3.0-tts-plus",
+    ]);
+    expect(exitCode, stderr).toBe(0);
+    expect(stdout).toContain("longanlingxin");
+    expect(stdout).toContain("longanlufeng");
+  });
+
+  test("【qwen-audio-3.0-tts-flash】获取音色列表", async () => {
+    const { stdout, stderr, exitCode } = await runCommandE2e(SPEECH_ROUTES, [
+      "speech",
+      "synthesize",
+      "--list-voices",
+      "--model",
+      "qwen-audio-3.0-tts-flash",
+    ]);
+    expect(exitCode, stderr).toBe(0);
+    expect(stdout).toContain("longanfengyue");
+    expect(stdout).toContain("loongjohn");
+  });
 });
 
 describe.skipIf(!isDashScopeE2EReady())("e2e: speech list-voices", () => {
