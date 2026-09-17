@@ -15,6 +15,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Internal
 
 - Add Agent security E2E coverage (help, missing-workspace usage error, dry-run host derivation and `--base-url` override, query-string filters, enum fast-fail) and generate the `bailian-cli` skill reference for the new `security` group.
+### Changed
+
+- **Simplified authentication** — Console login is now the recommended default and can create an ordinary API key when needed. Existing ordinary API keys and Token Plan subscription keys use the same `bl auth login --api-key <API_KEY>` command.
+- **Automatic API key validation and endpoint selection** — API keys are validated before being saved. The CLI automatically selects an available regional endpoint and applies the appropriate Token Plan configuration when applicable.
+
+
 ## [1.25.0] - 2026-09-14
 
 ### Added

@@ -15,6 +15,12 @@
 ### 内部
 
 - 补充 Agent 安全 E2E 覆盖（help、缺 workspace 的 usage 错误、dry-run 域名推导与 `--base-url` 覆盖、query string 筛选、枚举快失败），并为新的 `security` 组生成 `bailian-cli` 技能 reference。
+### 变更
+
+- **简化认证方式** —— 默认推荐使用控制台登录，需要时可自动创建普通 API Key。已有普通 API Key 和 Token Plan 订阅 Key 统一使用 `bl auth login --api-key <API_KEY>` 登录。
+- **API Key 自动校验与地域识别** —— API Key 会在保存前进行校验，CLI 自动选择可用地域，并在适用时完成 Token Plan 配置。
+
+
 ## [1.25.0] - 2026-09-14
 
 ### 新增
