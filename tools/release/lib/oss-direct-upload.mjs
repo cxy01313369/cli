@@ -73,6 +73,7 @@ function ossHost(cfg) {
 
 function contentTypeFor(name) {
   if (name.endsWith(".md")) return "text/markdown; charset=utf-8";
+  if (name.endsWith(".tar.gz") || name.endsWith(".tgz")) return "application/gzip";
   if (name.endsWith(".zip")) return "application/zip";
   if (name.endsWith(".json")) return "application/json";
   return "application/octet-stream";
