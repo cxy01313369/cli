@@ -112,7 +112,7 @@ export default defineCommand({
   exampleArgs: ["", "--enabled true", "--name 失败率 --level ERROR", "--output json"],
   async run(ctx) {
     const { settings, flags } = ctx;
-    const format = detectOutputFormat(settings.output);
+    const format = settings.outputExplicit ? detectOutputFormat(settings.output) : "json";
 
     const reqDTO = {
       workspaceId: settings.workspaceId,
@@ -139,7 +139,7 @@ export default defineCommand({
       return;
     }
 
-    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName);
+    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName, settings);
 
     const raw = await ctx.client.console(LIST_RULES_API, { reqDTO });
     const page = extractAlertPage<AlertRuleItem>(raw);

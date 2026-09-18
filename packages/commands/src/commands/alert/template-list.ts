@@ -81,7 +81,7 @@ export default defineCommand({
   exampleArgs: ["", "--source Official", "--name 失败率", "--template-id 123 --output json"],
   async run(ctx) {
     const { settings, flags } = ctx;
-    const format = detectOutputFormat(settings.output);
+    const format = settings.outputExplicit ? detectOutputFormat(settings.output) : "json";
 
     const reqDTO = {
       resourceType: "model",
@@ -104,7 +104,7 @@ export default defineCommand({
       return;
     }
 
-    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName);
+    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName, settings);
 
     const raw = await ctx.client.console(LIST_TEMPLATES_API, { reqDTO });
     const page = extractAlertPage<AlertTemplate>(raw);

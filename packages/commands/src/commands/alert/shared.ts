@@ -1,6 +1,6 @@
 import { UsageError, unwrapResponse, type Client, type FlagsDef } from "bailian-cli-core";
 import { parseCommaList } from "../shared/params.ts";
-import { ensureTelemetryReady } from "../shared/telemetry.ts";
+import { ensureTelemetryReady, ensureTelemetryRegionSupported } from "../shared/telemetry.ts";
 
 // ---------------------------------------------------------------------------
 // Alert rule write payload (shared by create / update)
@@ -207,7 +207,9 @@ export async function ensureAlertReady(
   client: Client,
   workspaceId: string | undefined,
   binName: string,
+  settings: Parameters<typeof ensureTelemetryRegionSupported>[0],
 ): Promise<void> {
+  ensureTelemetryRegionSupported(settings);
   await ensureTelemetryReady(client, {
     serviceType: "ModelMonitor",
     workspaceId,
@@ -238,7 +240,8 @@ export function parseCondition(raw: string): TemplateCondition {
   const parts = raw.split(":");
   if (parts.length !== 5) {
     throw new UsageError(
-      `Invalid --condition "${raw}". Expected metricName:aggregator:compareType:value:period.`,
+      `Invalid --condition "${raw}". Expected metricName:aggregator:compareType:value:period. ` +
+        "If the value contains > or <, wrap the whole condition in quotes so the shell does not treat it as redirection.",
     );
   }
   const [metricName, aggregator, compareType, compareValue, periodRaw] = parts as [

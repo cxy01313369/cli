@@ -3,8 +3,9 @@ import { ansi, emitResult, renderBoxTable } from "bailian-cli-runtime";
 import { formatNumber, formatDateTime } from "../shared/format.ts";
 import {
   TELEMETRY_TIME_FLAGS,
-  TELEMETRY_FILTER_FLAGS,
+  TELEMETRY_MONITOR_FILTER_FLAGS,
   buildTelemetryFilters,
+  ensureTelemetryRegionSupported,
   pollTelemetryData,
   resolveTimeRange,
 } from "../shared/telemetry.ts";
@@ -103,7 +104,7 @@ export default defineCommand({
   usageArgs: "[--model <model>] [--sort-by <field>] [flags]",
   flags: {
     ...TELEMETRY_TIME_FLAGS,
-    ...TELEMETRY_FILTER_FLAGS,
+    ...TELEMETRY_MONITOR_FILTER_FLAGS,
     sortBy: {
       type: "string",
       valueHint: "<field>",
@@ -147,6 +148,12 @@ export default defineCommand({
       },
     },
   },
+  notes: [
+    {
+      "en-US": "Only real-time (online) inference calls are counted in monitor statistics.",
+      "zh-CN": "监控统计仅覆盖实时（在线）推理调用。",
+    },
+  ],
   exampleArgs: [
     "",
     "--model qwen3.6-plus --days 1",
@@ -187,6 +194,7 @@ export default defineCommand({
       return;
     }
 
+    ensureTelemetryRegionSupported(settings);
     const resp = await pollTelemetryData(ctx.client, LIST_API, reqDTO);
     const list = ((resp.list as ModelStatisticItem[]) ?? []).filter(Boolean);
     const nextToken = resp.nextToken as string | undefined;

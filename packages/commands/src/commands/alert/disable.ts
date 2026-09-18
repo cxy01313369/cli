@@ -25,7 +25,7 @@ export default defineCommand({
   exampleArgs: ["--rule-id 789", "--rule-id 789 --dry-run"],
   async run(ctx) {
     const { settings, flags } = ctx;
-    const format = detectOutputFormat(settings.output);
+    const format = settings.outputExplicit ? detectOutputFormat(settings.output) : "json";
 
     const reqDTO = {
       workspaceId: settings.workspaceId,
@@ -45,7 +45,7 @@ export default defineCommand({
       return;
     }
 
-    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName);
+    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName, settings);
 
     await ctx.client.console(DISABLE_RULE_API, { reqDTO });
 

@@ -9,6 +9,7 @@ import { ansi, emitResult } from "bailian-cli-runtime";
 import { formatNumber, formatDateTime } from "../shared/format.ts";
 import {
   TELEMETRY_LOG_TIME_FLAGS,
+  ensureTelemetryRegionSupported,
   pollTelemetryData,
   resolveOssPayload,
   resolveTimeRange,
@@ -94,6 +95,7 @@ export default defineCommand({
       return;
     }
 
+    ensureTelemetryRegionSupported(settings);
     const resp = await pollTelemetryData(ctx.client, GET_TRACE_API, reqDTO);
     const trace = await resolveOssPayload<TraceEntry>(resp);
     if (!trace || !trace.traceId) {

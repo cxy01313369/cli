@@ -104,7 +104,7 @@ export default defineCommand({
   },
   async run(ctx) {
     const { settings, flags } = ctx;
-    const format = detectOutputFormat(settings.output);
+    const format = settings.outputExplicit ? detectOutputFormat(settings.output) : "json";
     const { startTime, endTime } = resolveTimeRange(flags);
 
     const reqDTO = {
@@ -133,7 +133,7 @@ export default defineCommand({
       return;
     }
 
-    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName);
+    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName, settings);
 
     const raw = await ctx.client.console(LIST_HISTORIES_API, { reqDTO });
     const page = extractAlertPage<AlertHistoryItem>(raw);

@@ -36,7 +36,7 @@ export default defineCommand({
   validate: (flags) => validateAlertRuleFlags(flags),
   async run(ctx) {
     const { settings, flags } = ctx;
-    const format = detectOutputFormat(settings.output);
+    const format = settings.outputExplicit ? detectOutputFormat(settings.output) : "json";
 
     const reqDTO = {
       ...(settings.workspaceId ? { workspaceId: settings.workspaceId } : {}),
@@ -56,7 +56,7 @@ export default defineCommand({
       return;
     }
 
-    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName);
+    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName, settings);
 
     await ctx.client.console(UPDATE_RULE_API, { reqDTO });
 

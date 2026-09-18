@@ -3,6 +3,7 @@ import { UsageError } from "bailian-cli-core";
 import {
   autoStep,
   buildTelemetryFilters,
+  ensureTelemetryRegionSupported,
   resolveTimeRange,
 } from "../src/commands/shared/telemetry.ts";
 import {
@@ -12,6 +13,26 @@ import {
   validateTemplateConditions,
   NO_SILENCE,
 } from "../src/commands/alert/shared.ts";
+
+describe("ensureTelemetryRegionSupported", () => {
+  test("支持的 region 放行", () => {
+    expect(() => ensureTelemetryRegionSupported({ consoleRegion: "cn-beijing" })).not.toThrow();
+    expect(() => ensureTelemetryRegionSupported({ consoleRegion: "ap-southeast-1" })).not.toThrow();
+  });
+
+  test("未设置 region 时默认 cn-beijing 放行", () => {
+    expect(() => ensureTelemetryRegionSupported({})).not.toThrow();
+  });
+
+  test("未部署遥测服务的 region 报 UsageError", () => {
+    expect(() => ensureTelemetryRegionSupported({ consoleRegion: "cn-shanghai" })).toThrow(
+      UsageError,
+    );
+    expect(() => ensureTelemetryRegionSupported({ consoleRegion: "us-east-1" })).toThrow(
+      /not available in console region "us-east-1"/,
+    );
+  });
+});
 
 describe("resolveTimeRange", () => {
   test("默认按 days 向前推", () => {
@@ -56,10 +77,10 @@ describe("autoStep", () => {
 
   test("按时间范围选档", () => {
     expect(autoStep(0, hoursAgo(12).endTime)).toBe(60);
-    expect(autoStep(0, hoursAgo(24).endTime)).toBe(120);
-    expect(autoStep(0, hoursAgo(48).endTime)).toBe(300);
-    expect(autoStep(0, hoursAgo(96).endTime)).toBe(900);
-    expect(autoStep(0, hoursAgo(24 * 30).endTime)).toBe(1800);
+    expect(autoStep(0, hoursAgo(24).endTime)).toBe(3600);
+    expect(autoStep(0, hoursAgo(48).endTime)).toBe(3600);
+    expect(autoStep(0, hoursAgo(96).endTime)).toBe(3600);
+    expect(autoStep(0, hoursAgo(24 * 30).endTime)).toBe(86400);
   });
 });
 

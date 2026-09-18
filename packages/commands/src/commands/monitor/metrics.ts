@@ -4,9 +4,11 @@ import { formatNumber, formatDateTime } from "../shared/format.ts";
 import { parseCommaList } from "../shared/params.ts";
 import {
   TELEMETRY_TIME_FLAGS,
-  TELEMETRY_FILTER_FLAGS,
+  TELEMETRY_MONITOR_FILTER_FLAGS,
   autoStep,
   buildTelemetryFilters,
+  ensureTelemetryRegionSupported,
+  METRIC_STEPS,
   pollTelemetryData,
   resolveOssPayload,
   resolveTimeRange,
@@ -50,6 +52,15 @@ const AGG_METHODS = [
   "cumavg",
   "sum_pm",
 ] as const;
+
+/** Failure-family metrics whose drill-down lives in `monitor errors`. */
+const FAILURE_METRICS = new Set([
+  "model_call_failed_count",
+  "model_call_4xx_count",
+  "model_call_5xx_count",
+  "model_call_429_count",
+  "model_call_data_inspection_failed_count",
+]);
 
 interface MonitorSeries {
   metricName: string;
@@ -102,7 +113,7 @@ export default defineCommand({
   usageArgs: "--metric <name>[,<name>...] [flags]",
   flags: {
     ...TELEMETRY_TIME_FLAGS,
-    ...TELEMETRY_FILTER_FLAGS,
+    ...TELEMETRY_MONITOR_FILTER_FLAGS,
     metric: {
       type: "string",
       valueHint: "<name>[,<name>...]",
@@ -125,8 +136,8 @@ export default defineCommand({
       type: "number",
       valueHint: "<seconds>",
       description: {
-        "en-US": "Data point interval in seconds (default: auto by time range)",
-        "zh-CN": "数据点间隔（秒），默认按时间范围自动选择",
+        "en-US": "Data point interval in seconds: 60, 3600 or 86400 (default: auto by time range)",
+        "zh-CN": "数据点间隔（秒）：60、3600 或 86400，默认按时间范围自动选择",
       },
     },
   },
@@ -134,6 +145,10 @@ export default defineCommand({
     {
       "en-US": `Metrics: ${METRIC_NAMES.join(", ")}`,
       "zh-CN": `可用指标：${METRIC_NAMES.join("、")}`,
+    },
+    {
+      "en-US": "Only real-time (online) inference calls are counted in monitor statistics.",
+      "zh-CN": "监控统计仅覆盖实时（在线）推理调用。",
     },
   ],
   exampleArgs: [
@@ -149,8 +164,8 @@ export default defineCommand({
     if (unknown.length > 0) {
       return `Unknown metric: ${unknown.join(", ")}. See notes for the full list.`;
     }
-    if (flags.step != null && flags.step < 1) {
-      return "--step must be a positive number of seconds.";
+    if (flags.step != null && !(METRIC_STEPS as readonly number[]).includes(flags.step)) {
+      return `--step must be one of ${METRIC_STEPS.join(", ")} seconds.`;
     }
     return undefined;
   },
@@ -184,6 +199,7 @@ export default defineCommand({
       return;
     }
 
+    ensureTelemetryRegionSupported(settings);
     const resp = await pollTelemetryData(ctx.client, METRICS_API, reqDTO);
     const allSeries = (await resolveOssPayload<MonitorSeries[]>(resp)) ?? [];
 
@@ -200,5 +216,12 @@ export default defineCommand({
     }
 
     printSeries(allSeries);
+    if (parseCommaList(flags.metric).some((metricName) => FAILURE_METRICS.has(metricName))) {
+      process.stdout.write(
+        ansi(process.stdout).dim(
+          `\nFor the error-code breakdown, run \`${ctx.identity.binName} monitor errors\`.\n`,
+        ),
+      );
+    }
   },
 });

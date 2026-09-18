@@ -88,8 +88,21 @@ describe("e2e: monitor", () => {
     expect(data.api).toBe("zeldaEasy.bailian-telemetry.platform-model.getModelMonitorDataWithOss");
     expect(data.data?.reqDTO?.metricFilters).toHaveLength(2);
     expect(data.data?.reqDTO?.metricFilters?.[0]?.aggMethod).toBe("p99");
-    // 1 天范围自动 step = 120s
-    expect(data.data?.reqDTO?.step).toBe(120);
+    // 1 天范围自动 step = 3600s
+    expect(data.data?.reqDTO?.step).toBe(3600);
+  });
+
+  test("monitor metrics 非法 step 报错", async () => {
+    const { stderr, exitCode } = await runCommandE2e(MONITOR_ROUTES, [
+      "monitor",
+      "metrics",
+      "--metric",
+      "model_call_count",
+      "--step",
+      "300",
+    ]);
+    expect(exitCode).toBe(2);
+    expect(stderr).toContain("--step must be one of 60, 3600, 86400");
   });
 
   test("monitor overview --dry-run 输出统计 API", async () => {
@@ -137,8 +150,31 @@ describe("e2e: monitor", () => {
     ]);
     expect(exitCode, stderr).toBe(0);
     const data = parseStdoutJson<{ apis?: string[] }>(stdout);
+    expect(data.apis).toContain("zeldaEasy.bailian-telemetry.activate.getTelemetrySlrStatus");
+    expect(data.apis).toContain("zeldaEasy.bailian-telemetry.activate.createTelemetrySlr");
     expect(data.apis).toContain("zeldaEasy.bailian-telemetry.activate.getTelemetryServiceStatus");
     expect(data.apis).toContain("zeldaEasy.bailian-telemetry.activate.initCmsService");
+    expect(data.apis).toContain("zeldaEasy.bailian-telemetry.activate.initTelemetryStoreInstance");
+    expect(data.apis).toContain("zeldaEasy.bailian-telemetry.telemetryGroup.enableTelemetryGroup");
+  });
+
+  test("monitor delivery disable --dry-run 输出 Monitor 开关关闭请求", async () => {
+    const { stdout, stderr, exitCode } = await runCommandE2e(MONITOR_ROUTES, [
+      "monitor",
+      "delivery",
+      "disable",
+      "--dry-run",
+      "--output",
+      "json",
+    ]);
+    expect(exitCode, stderr).toBe(0);
+    const data = parseStdoutJson<{
+      api?: string;
+      data?: { reqDTO?: { telemetryType?: string; resourceId?: string } };
+    }>(stdout);
+    expect(data.api).toBe("zeldaEasy.bailian-telemetry.telemetryGroup.disableTelemetryGroup");
+    expect(data.data?.reqDTO?.telemetryType).toBe("Monitor");
+    expect(data.data?.reqDTO?.resourceId).toBe("all");
   });
 
   test("--start-time 晚于 --end-time 报错", async () => {

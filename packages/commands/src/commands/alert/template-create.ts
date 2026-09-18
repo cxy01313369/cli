@@ -75,9 +75,9 @@ export default defineCommand({
       valueHint: "<metric:agg:cmp:value:period>",
       description: {
         "en-US":
-          "Alert condition, repeatable (1-10). Example: model_call_failed_count:sum:>:10:60. See `alert metrics` for metric names",
+          "Alert condition, repeatable (1-10). Example: 'model_call_failed_count:sum:>:10:60' (quote it: > is a shell metacharacter). See `alert metrics` for metric names",
         "zh-CN":
-          "告警条件，可重复（1-10 条）。示例：model_call_failed_count:sum:>:10:60。指标名见 `alert metrics`",
+          "告警条件，可重复（1-10 条）。示例：'model_call_failed_count:sum:>:10:60'（含 > 等 shell 特殊字符，需加引号）。指标名见 `alert metrics`",
       },
     },
     from: {
@@ -99,15 +99,15 @@ export default defineCommand({
     },
   },
   exampleArgs: [
-    "--name 失败率告警 --condition model_call_failed_count:sum:>:10:60",
-    "--name 高延迟 --condition model_call_duration:p99:>:3000:300 --condition model_call_5xx_count:sum:>:5:60 --logical-operator and",
-    "--name 我的模板 --from 42",
-    "--name test --condition model_call_count:sum:>:100:60 --dry-run",
+    "--name 失败率告警 --condition 'model_call_failed_count:sum:>:10:60'",
+    "--name 高延迟 --condition 'model_call_duration:avg:>:3000:300' --condition 'model_call_5xx_count:sum:>:5:60' --logical-operator and",
+    "--name 我的模板 --from <template-id>",
+    "--name test --condition 'model_call_count:sum:>:100:60' --dry-run",
   ],
   validate: (flags) => validateTemplateConditions(flags.condition, Boolean(flags.from)),
   async run(ctx) {
     const { settings, flags } = ctx;
-    const format = detectOutputFormat(settings.output);
+    const format = settings.outputExplicit ? detectOutputFormat(settings.output) : "json";
 
     const conditions = flags.condition?.length ? flags.condition.map(parseCondition) : undefined;
 
@@ -131,7 +131,7 @@ export default defineCommand({
       return;
     }
 
-    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName);
+    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName, settings);
 
     const reqDTO = {
       templateName: flags.name,

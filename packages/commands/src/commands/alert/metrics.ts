@@ -27,7 +27,7 @@ export default defineCommand({
   exampleArgs: ["", "--output json"],
   async run(ctx) {
     const { settings } = ctx;
-    const format = detectOutputFormat(settings.output);
+    const format = settings.outputExplicit ? detectOutputFormat(settings.output) : "json";
 
     if (settings.dryRun) {
       emitResult(
@@ -41,7 +41,7 @@ export default defineCommand({
       return;
     }
 
-    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName);
+    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName, settings);
 
     const raw = await ctx.client.console(LIST_METRICS_API, {
       reqDTO: { workspaceId: settings.workspaceId, resourceType: "model" },

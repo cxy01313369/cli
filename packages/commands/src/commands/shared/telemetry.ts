@@ -2,9 +2,11 @@ import {
   BailianError,
   ExitCode,
   UsageError,
+  effectiveConsoleGatewayConfig,
   unwrapResponse,
   type Client,
   type FlagsDef,
+  type Settings,
 } from "bailian-cli-core";
 import { parseCommaList } from "./params.ts";
 
@@ -64,6 +66,27 @@ export async function pollTelemetryData(
     throw new BailianError("Request timed out.", ExitCode.TIMEOUT);
   }
   return unwrapResponse(raw as Record<string, unknown>);
+}
+
+// ---------------------------------------------------------------------------
+// Region availability
+// ---------------------------------------------------------------------------
+
+/** Console regions where the model telemetry backends (monitor/log/alert) are deployed. */
+export const TELEMETRY_SUPPORTED_REGIONS = ["cn-beijing", "ap-southeast-1"] as const;
+
+/**
+ * The monitor / log / alert services only exist in a subset of console
+ * regions. Fail fast with the supported list instead of letting the request
+ * die with an opaque gateway error in a region without the service.
+ */
+export function ensureTelemetryRegionSupported(settings: Pick<Settings, "consoleRegion">): void {
+  const region = effectiveConsoleGatewayConfig(settings).consoleRegion;
+  if ((TELEMETRY_SUPPORTED_REGIONS as readonly string[]).includes(region)) return;
+  throw new UsageError(
+    `Model monitor/log/alert commands are not available in console region "${region}". ` +
+      `Supported regions: ${TELEMETRY_SUPPORTED_REGIONS.join(", ")} (set --console-region).`,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -154,14 +177,15 @@ export function unwrapConsolePrimitive<T>(raw: unknown): T {
   return resp as T;
 }
 
-/** Default step (seconds) for a range: finer for short ranges, coarser for long ones. */
+/** Steps accepted by the monitor metrics API. */
+export const METRIC_STEPS = [60, 3600, 86400] as const;
+
+/** Default step for a range: 60s for short windows, hourly up to 7 days, daily beyond. */
 export function autoStep(startTime: number, endTime: number): number {
   const hours = (endTime - startTime) / 3_600_000;
   if (hours <= 12) return 60;
-  if (hours <= 24) return 120;
-  if (hours <= 3 * 24) return 300;
-  if (hours <= 7 * 24) return 900;
-  return 1800;
+  if (hours <= 7 * 24) return 3600;
+  return 86400;
 }
 
 // ---------------------------------------------------------------------------
@@ -259,6 +283,128 @@ export async function ensureTelemetryReady(
 }
 
 // ---------------------------------------------------------------------------
+// Service-linked role (SLR) helpers
+// ---------------------------------------------------------------------------
+
+const SLR_STATUS_API = "zeldaEasy.bailian-telemetry.activate.getTelemetrySlrStatus";
+const CREATE_SLR_API = "zeldaEasy.bailian-telemetry.activate.createTelemetrySlr";
+
+export type TelemetrySlrType = "Log" | "Xtrace" | "Cms";
+
+export async function getTelemetrySlrAuthorized(
+  client: Client,
+  slrType: TelemetrySlrType,
+  workspaceId?: string,
+): Promise<boolean> {
+  const raw = await client.console(SLR_STATUS_API, {
+    reqDTO: { ...(workspaceId ? { workspaceId } : {}), slrType },
+  });
+  return unwrapConsolePrimitive<boolean>(raw) === true;
+}
+
+/**
+ * Authorize a service-linked role when missing. The role takes effect with a
+ * short delay, so after submitting we poll the status API briefly; a lagging
+ * status is not treated as a failure (downstream APIs re-check anyway).
+ */
+export async function ensureTelemetrySlrAuthorized(
+  client: Client,
+  slrType: TelemetrySlrType,
+  workspaceId?: string,
+  opts: {
+    pollRetries?: number;
+    pollIntervalMs?: number;
+    onProgress?: (message: string) => void;
+  } = {},
+): Promise<boolean> {
+  if (await getTelemetrySlrAuthorized(client, slrType, workspaceId)) return true;
+
+  opts.onProgress?.("Authorizing the service-linked role...");
+  await client.console(CREATE_SLR_API, {
+    reqDTO: { ...(workspaceId ? { workspaceId } : {}), slrType },
+  });
+
+  const retries = opts.pollRetries ?? 10;
+  const intervalMs = opts.pollIntervalMs ?? 2000;
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    if (await getTelemetrySlrAuthorized(client, slrType, workspaceId)) return true;
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
+// Telemetry group delivery switches (AuditLog / InferenceLog / Monitor)
+// ---------------------------------------------------------------------------
+
+const GROUP_STATUS_API = "zeldaEasy.bailian-telemetry.telemetryGroup.getTelemetryGroupStatus";
+export const ENABLE_GROUP_API = "zeldaEasy.bailian-telemetry.telemetryGroup.enableTelemetryGroup";
+export const DISABLE_GROUP_API = "zeldaEasy.bailian-telemetry.telemetryGroup.disableTelemetryGroup";
+
+interface TelemetryGroupRecord {
+  resourceId?: string;
+  resourceType?: string;
+  telemetryType?: string;
+  telemetryStatus?: string;
+  workspaceId?: string;
+}
+
+/** The gateway may wrap the record array in `result` / `list`, or return it bare. */
+function extractGroupRecords(resp: Record<string, unknown>): TelemetryGroupRecord[] {
+  for (const key of ["result", "list", "data"]) {
+    const value = resp[key];
+    if (Array.isArray(value)) return value as TelemetryGroupRecord[];
+  }
+  return [];
+}
+
+/**
+ * Read a workspace-wide delivery switch (`resourceIds: ['all']`) for one
+ * telemetry type: `true` = enabled, `false` = explicitly disabled,
+ * `null` = never configured in this workspace.
+ */
+export async function getTelemetryGroupSwitch(
+  client: Client,
+  telemetryType: string,
+  workspaceId?: string,
+): Promise<boolean | null> {
+  const raw = await client.console(GROUP_STATUS_API, {
+    reqDTO: {
+      ...(workspaceId ? { workspaceId } : {}),
+      resourceType: "model",
+      resourceIds: ["all"],
+      telemetryType,
+    },
+  });
+  // The final payload is usually the record array itself; some gateways wrap
+  // it in `result` / `list` / `data` instead.
+  const unwrapped = unwrapResponse(raw as Record<string, unknown>);
+  const records = Array.isArray(unwrapped)
+    ? (unwrapped as TelemetryGroupRecord[])
+    : extractGroupRecords(unwrapped);
+  const own = records.filter(
+    (record) => !workspaceId || String(record.workspaceId) === String(workspaceId),
+  );
+  if (own.length === 0) return null;
+  return own[0].telemetryStatus === "enable";
+}
+
+/** reqDTO for enable/disableTelemetryGroup across every model in the workspace. */
+export function buildGroupSwitchReqDTO(
+  settings: Settings,
+  telemetryType: string,
+): Record<string, unknown> {
+  return {
+    ...(settings.workspaceId
+      ? { workspaceId: settings.workspaceId, filterWorkspaceId: settings.workspaceId }
+      : {}),
+    resourceId: "all",
+    resourceType: "model",
+    telemetryType,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Shared monitor filter flags
 // ---------------------------------------------------------------------------
 
@@ -305,6 +451,17 @@ export const TELEMETRY_FILTER_FLAGS = {
       "zh-CN": "推理类型：Online、Offline",
     },
   },
+} satisfies FlagsDef;
+
+/**
+ * Monitor commands only cover real-time (online) inference, so they expose
+ * every telemetry filter except `--call-source`.
+ */
+export const TELEMETRY_MONITOR_FILTER_FLAGS = {
+  model: TELEMETRY_FILTER_FLAGS.model,
+  apiKeyId: TELEMETRY_FILTER_FLAGS.apiKeyId,
+  channel: TELEMETRY_FILTER_FLAGS.channel,
+  source: TELEMETRY_FILTER_FLAGS.source,
 } satisfies FlagsDef;
 
 export interface TelemetryFilterFlags {

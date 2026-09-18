@@ -36,7 +36,7 @@ export default defineCommand({
   ],
   async run(ctx) {
     const { settings, flags } = ctx;
-    const format = detectOutputFormat(settings.output);
+    const format = settings.outputExplicit ? detectOutputFormat(settings.output) : "json";
 
     const reqDTO = { ruleIds: parseCommaList(flags.ruleId) };
 
@@ -52,12 +52,12 @@ export default defineCommand({
       return;
     }
 
+    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName, settings);
+
     await confirmDangerousAction(
       `Delete ${reqDTO.ruleIds.length} alert rule(s): ${reqDTO.ruleIds.join(", ")}.\nThe rules are permanently removed. This cannot be undone.`,
       flags.yes ?? false,
     );
-
-    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName);
 
     await ctx.client.console(DELETE_RULES_API, { reqDTO });
 

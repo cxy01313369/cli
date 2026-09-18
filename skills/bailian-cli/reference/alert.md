@@ -300,33 +300,33 @@ bl alert metrics --output json
 
 #### Flags
 
-| Flag                                        | Type   | Required | Description                                                                                                            |
-| ------------------------------------------- | ------ | -------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `--name <name>`                             | string | yes      | Template name (max 64 chars)                                                                                           |
-| `--condition <metric:agg:cmp:value:period>` | array  | no       | Alert condition, repeatable (1-10). Example: model_call_failed_count:sum:>:10:60. See `alert metrics` for metric names |
-| `--from <template-id>`                      | string | no       | Copy conditions from an existing (e.g. official) template                                                              |
-| `--logical-operator <or\|and>`              | string | no       | How multiple conditions combine (default: or)                                                                          |
-| `--console-region <region>`                 | string | no       | Console gateway region (e.g. cn-beijing, ap-southeast-1)                                                               |
-| `--console-site <site>`                     | string | no       | Console site: domestic, international                                                                                  |
-| `--console-switch-agent <uid>`              | number | no       | Switch agent UID for delegated access                                                                                  |
-| `--workspace-id <id>`                       | string | no       | Workspace ID (env: BAILIAN_WORKSPACE_ID)                                                                               |
+| Flag                                        | Type   | Required | Description                                                                                                                                                     |
+| ------------------------------------------- | ------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--name <name>`                             | string | yes      | Template name (max 64 chars)                                                                                                                                    |
+| `--condition <metric:agg:cmp:value:period>` | array  | no       | Alert condition, repeatable (1-10). Example: 'model_call_failed_count:sum:>:10:60' (quote it: > is a shell metacharacter). See `alert metrics` for metric names |
+| `--from <template-id>`                      | string | no       | Copy conditions from an existing (e.g. official) template                                                                                                       |
+| `--logical-operator <or\|and>`              | string | no       | How multiple conditions combine (default: or)                                                                                                                   |
+| `--console-region <region>`                 | string | no       | Console gateway region (e.g. cn-beijing, ap-southeast-1)                                                                                                        |
+| `--console-site <site>`                     | string | no       | Console site: domestic, international                                                                                                                           |
+| `--console-switch-agent <uid>`              | number | no       | Switch agent UID for delegated access                                                                                                                           |
+| `--workspace-id <id>`                       | string | no       | Workspace ID (env: BAILIAN_WORKSPACE_ID)                                                                                                                        |
 
 #### Examples
 
 ```bash
-bl alert template create --name 失败率告警 --condition model_call_failed_count:sum:>:10:60
+bl alert template create --name 失败率告警 --condition 'model_call_failed_count:sum:>:10:60'
 ```
 
 ```bash
-bl alert template create --name 高延迟 --condition model_call_duration:p99:>:3000:300 --condition model_call_5xx_count:sum:>:5:60 --logical-operator and
+bl alert template create --name 高延迟 --condition 'model_call_duration:avg:>:3000:300' --condition 'model_call_5xx_count:sum:>:5:60' --logical-operator and
 ```
 
 ```bash
-bl alert template create --name 我的模板 --from 42
+bl alert template create --name 我的模板 --from <template-id>
 ```
 
 ```bash
-bl alert template create --name test --condition model_call_count:sum:>:100:60 --dry-run
+bl alert template create --name test --condition 'model_call_count:sum:>:100:60' --dry-run
 ```
 
 ### `bl alert template delete`
@@ -419,25 +419,25 @@ bl alert template list --template-id 123 --output json
 
 #### Flags
 
-| Flag                                        | Type   | Required | Description                                                                      |
-| ------------------------------------------- | ------ | -------- | -------------------------------------------------------------------------------- |
-| `--template-id <id>`                        | string | yes      | Template ID (from `alert template list`)                                         |
-| `--name <name>`                             | string | yes      | Template name (max 64 chars)                                                     |
-| `--condition <metric:agg:cmp:value:period>` | array  | no       | Alert condition, repeatable (1-10). Example: model_call_failed_count:sum:>:10:60 |
-| `--logical-operator <or\|and>`              | string | no       | How multiple conditions combine (default: or)                                    |
-| `--console-region <region>`                 | string | no       | Console gateway region (e.g. cn-beijing, ap-southeast-1)                         |
-| `--console-site <site>`                     | string | no       | Console site: domestic, international                                            |
-| `--console-switch-agent <uid>`              | number | no       | Switch agent UID for delegated access                                            |
-| `--workspace-id <id>`                       | string | no       | Workspace ID (env: BAILIAN_WORKSPACE_ID)                                         |
+| Flag                                        | Type   | Required | Description                                                                                                               |
+| ------------------------------------------- | ------ | -------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `--template-id <id>`                        | string | yes      | Template ID (from `alert template list`)                                                                                  |
+| `--name <name>`                             | string | yes      | Template name (max 64 chars)                                                                                              |
+| `--condition <metric:agg:cmp:value:period>` | array  | no       | Alert condition, repeatable (1-10). Example: 'model_call_failed_count:sum:>:10:60' (quote it: > is a shell metacharacter) |
+| `--logical-operator <or\|and>`              | string | no       | How multiple conditions combine (default: or)                                                                             |
+| `--console-region <region>`                 | string | no       | Console gateway region (e.g. cn-beijing, ap-southeast-1)                                                                  |
+| `--console-site <site>`                     | string | no       | Console site: domestic, international                                                                                     |
+| `--console-switch-agent <uid>`              | number | no       | Switch agent UID for delegated access                                                                                     |
+| `--workspace-id <id>`                       | string | no       | Workspace ID (env: BAILIAN_WORKSPACE_ID)                                                                                  |
 
 #### Examples
 
 ```bash
-bl alert template update --template-id 123 --name 失败率告警 --condition model_call_failed_count:sum:>:20:60
+bl alert template update --template-id 123 --name 失败率告警 --condition 'model_call_failed_count:sum:>:20:60'
 ```
 
 ```bash
-bl alert template update --template-id 123 --name test --condition model_call_count:sum:>:100:60 --dry-run
+bl alert template update --template-id 123 --name test --condition 'model_call_count:sum:>:100:60' --dry-run
 ```
 
 ### `bl alert update`

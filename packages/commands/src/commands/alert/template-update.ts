@@ -35,8 +35,10 @@ export default defineCommand({
       type: "array",
       valueHint: "<metric:agg:cmp:value:period>",
       description: {
-        "en-US": "Alert condition, repeatable (1-10). Example: model_call_failed_count:sum:>:10:60",
-        "zh-CN": "告警条件，可重复（1-10 条）。示例：model_call_failed_count:sum:>:10:60",
+        "en-US":
+          "Alert condition, repeatable (1-10). Example: 'model_call_failed_count:sum:>:10:60' (quote it: > is a shell metacharacter)",
+        "zh-CN":
+          "告警条件，可重复（1-10 条）。示例：'model_call_failed_count:sum:>:10:60'（含 > 等 shell 特殊字符，需加引号）",
       },
     },
     logicalOperator: {
@@ -50,13 +52,13 @@ export default defineCommand({
     },
   },
   exampleArgs: [
-    "--template-id 123 --name 失败率告警 --condition model_call_failed_count:sum:>:20:60",
-    "--template-id 123 --name test --condition model_call_count:sum:>:100:60 --dry-run",
+    "--template-id 123 --name 失败率告警 --condition 'model_call_failed_count:sum:>:20:60'",
+    "--template-id 123 --name test --condition 'model_call_count:sum:>:100:60' --dry-run",
   ],
   validate: (flags) => validateTemplateConditions(flags.condition, false),
   async run(ctx) {
     const { settings, flags } = ctx;
-    const format = detectOutputFormat(settings.output);
+    const format = settings.outputExplicit ? detectOutputFormat(settings.output) : "json";
 
     const reqDTO = {
       templateId: flags.templateId,
@@ -78,7 +80,7 @@ export default defineCommand({
       return;
     }
 
-    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName);
+    await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName, settings);
 
     await ctx.client.console(UPDATE_TEMPLATE_API, { reqDTO });
 

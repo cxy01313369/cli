@@ -4,6 +4,7 @@ import { formatNumber, formatDateTime } from "../shared/format.ts";
 import { parseCommaList } from "../shared/params.ts";
 import {
   TELEMETRY_LOG_TIME_FLAGS,
+  ensureTelemetryRegionSupported,
   pollTelemetryData,
   resolveTimeRange,
 } from "../shared/telemetry.ts";
@@ -77,6 +78,7 @@ export default defineCommand({
       return;
     }
 
+    ensureTelemetryRegionSupported(settings);
     const resp = await pollTelemetryData(ctx.client, TRACE_STATISTIC_API, reqDTO);
     // Keyed by resource id.
     const items = Object.values(resp) as TraceStatistic[];

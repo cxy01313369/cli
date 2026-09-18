@@ -3,6 +3,7 @@ import { ansi, emitResult, renderBoxTable } from "bailian-cli-runtime";
 import { formatNumber, formatDateTime } from "../shared/format.ts";
 import {
   TELEMETRY_LOG_TIME_FLAGS,
+  ensureTelemetryRegionSupported,
   pollTelemetryData,
   resolveOssPayload,
   resolveTimeRange,
@@ -147,6 +148,7 @@ export default defineCommand({
       return;
     }
 
+    ensureTelemetryRegionSupported(settings);
     const resp = await pollTelemetryData(ctx.client, LIST_TRACES_API, reqDTO);
     // The payload is either the trace array itself or a { totalCount, list } wrapper.
     const payload = await resolveOssPayload<TraceEntry[] | TraceListPayload>(resp);
