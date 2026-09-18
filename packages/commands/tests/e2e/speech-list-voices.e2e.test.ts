@@ -1,5 +1,7 @@
+import { writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, test } from "vite-plus/test";
-import { isDashScopeE2EReady, runCommandHelp, runCommandE2e } from "./helpers.ts";
+import { isDashScopeE2EReady, makeE2eOutputDir, runCommandHelp, runCommandE2e } from "./helpers.ts";
 import { SPEECH_ROUTES } from "./topic-routes.ts";
 
 /**
@@ -56,6 +58,35 @@ describe("e2e: speech list-voices", () => {
     expect(exitCode, stderr).toBe(0);
     expect(stdout).toContain("longanfengyue");
     expect(stdout).toContain("loongjohn");
+  });
+
+  // 激活 token-plan 后不传 --model，应打出默认 qwen-audio plus 音色
+  test("Token Plan 未显式传 --model 时 --list-voices 使用默认 qwen-audio TTS", async () => {
+    const configDir = makeE2eOutputDir("speech-list-voices-token-plan-default");
+    writeFileSync(
+      join(configDir, "config.json"),
+      JSON.stringify({
+        "token-plan": {
+          api_key: "sk-sp-e2e-placeholder",
+          base_url: "https://token-plan.cn-beijing.maas.aliyuncs.com",
+          default_speech_model: "qwen-audio-3.0-tts-plus",
+        },
+      }),
+    );
+
+    const { stdout, stderr, exitCode } = await runCommandE2e(
+      SPEECH_ROUTES,
+      ["speech", "synthesize", "--config", "token-plan", "--list-voices"],
+      {
+        BAILIAN_CONFIG_DIR: configDir,
+        DASHSCOPE_API_KEY: "",
+        DASHSCOPE_BASE_URL: "",
+      },
+    );
+
+    expect(exitCode, stderr).toBe(0);
+    expect(stdout).toContain("longanlingxin");
+    expect(stdout).toContain("longanlufeng");
   });
 });
 

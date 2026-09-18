@@ -24,7 +24,6 @@ import { downloadFile } from "bailian-cli-runtime";
 import { runConcurrent, downloadParallel, getConcurrency } from "bailian-cli-runtime";
 import { emitResult, emitBare } from "bailian-cli-runtime";
 import { VOICE_TTS_PAGE } from "bailian-cli-runtime";
-import { rethrowWithSpeechSynthesizeHint } from "./synthesize-hint.ts";
 
 const COSYVOICE_CLONE_DESIGN_DOC = `${DOCS_HOSTS.cn}/cosyvoice-clone-design-api`;
 const QWEN_AUDIO_TTS_VOICE_DOC = `${DOCS_HOSTS.cn}/qwen-audio-tts-voice-list`;
@@ -438,17 +437,10 @@ export default defineCommand({
       process.stderr.write(`[Model: ${model}] [Voice: ${voice}]\n`);
     }
 
-    try {
-      if (useStream) {
-        await handleStreamMode(ctx.client, settings, body, flags, format);
-      } else {
-        await handleNonStreamMode(ctx.client, settings, body, flags, format);
-      }
-    } catch (error) {
-      rethrowWithSpeechSynthesizeHint(error, {
-        binName: ctx.identity.binName,
-        model,
-      });
+    if (useStream) {
+      await handleStreamMode(ctx.client, settings, body, flags, format);
+    } else {
+      await handleNonStreamMode(ctx.client, settings, body, flags, format);
     }
   },
 });
