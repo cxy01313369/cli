@@ -6,6 +6,50 @@
 
 [English](CHANGELOG.md) · [README](README.zh.md) · [参与贡献](CONTRIBUTING.zh.md)
 
+## [1.26.0] - 2026-09-17
+
+### 变更
+
+- **简化认证方式** —— 默认推荐使用控制台登录，需要时可自动创建普通 API Key。已有普通 API Key 和 Token Plan 订阅 Key 统一使用 `bl auth login --api-key <API_KEY>` 登录。
+- **API Key 自动校验与地域识别** —— API Key 会在保存前进行校验，CLI 自动选择可用地域，并在适用时完成 Token Plan 配置。
+
+### 修复
+
+- **视频任务诊断** —— 视频任务失败时展示服务端错误码、错误信息、请求 ID 和调度时间；下载失败时展示实际失败原因，不再只提示任务未完成。
+
+## [1.25.0] - 2026-09-14
+
+### 新增
+
+- **Token Plan harness 权益额度** —— `bl token-plan harness-quota` 查看 Token Plan harness 权益额度用量（Console 认证），联合 harness 列表与已发放权益，展示已用/总额度、使用比例和重置时间；待发放权益的 harness 以「发放中」状态列出。
+- 通过 `--type official_tool|infrastructure` 筛选 harness 列表；支持额度框输出或 `--output json`。
+
+## [1.24.0] - 2026-09-11
+
+### 新增
+
+- Sandbox 实例与模版生命周期命令，支持自动轮询构建状态和 `--async` 异步提交。
+- `bl sandbox official-images` 与模版 `--image` 参数，内置代码解释器、浏览器和全能型镜像预设。
+- `bl sandbox file upload` 使用 `source=sandbox_template` 上传模版挂载文件，返回的 File ID 可用于 `mntConfig`。
+- Sandbox 复用 `--base-url`、环境变量和 Profile 配置，未配置时通过工作空间拼接接入地址。
+- 独立的 `bailian-sandbox` Skill，提供命令参考和实例连接指南。
+
+### 修复
+
+- 模版构建轮询失败时保留已提交的 `templateID` 和 `buildID`，便于先查询已有构建，避免重复提交。
+
+### 安全
+
+- Sandbox REST 调用使用百炼 Bearer 鉴权，不依赖 E2B SDK 或 E2B API Key；连接凭据和 dry-run 环境变量默认脱敏。
+
+## [1.23.0] - 2026-09-10
+
+### 新增
+
+- **Profile 级水印控制** —— 可通过 `bl config set --key watermark --value true|false` 设置图片生成与编辑、视频生成与编辑以及参考生视频命令的默认水印行为。
+- **ASR 准确率增强** —— `bl speech recognize` 现支持通过 `--vocabulary` 传入即时热词、通过 `--context` 增强上下文词表，以及通过 `--vocabulary-id` 使用适用于对应 ASR 模型的预编译热词表。
+- **语音热词表管理** —— 新增 `bl speech vocabulary create|list|get|update|delete`，用于管理可复用的预编译热词表。
+
 ## [1.22.0] - 2026-09-08
 
 ### 变更

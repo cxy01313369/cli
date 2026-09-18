@@ -6,6 +6,50 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 [中文版](CHANGELOG.zh.md) · [README](README.md) · [Contributing](CONTRIBUTING.md)
 
+## [1.26.0] - 2026-09-17
+
+### Changed
+
+- **Simplified authentication** — Console login is now the recommended default and can create an ordinary API key when needed. Existing ordinary API keys and Token Plan subscription keys use the same `bl auth login --api-key <API_KEY>` command.
+- **Automatic API key validation and endpoint selection** — API keys are validated before being saved. The CLI automatically selects an available regional endpoint and applies the appropriate Token Plan configuration when applicable.
+
+### Fixed
+
+- **Video task diagnostics** — Failed video tasks now expose the service error code, message, request ID, and scheduling time; downloads show the actual failure detail instead of only an incomplete status.
+
+## [1.25.0] - 2026-09-14
+
+### Added
+
+- **Token Plan harness quota** — `bl token-plan harness-quota` shows Token Plan harness entitlement quota usage (Console auth), joining the harness list with issued entitlements to display used/total quota, usage ratio, and reset time; harnesses with a pending entitlement are listed as issuing.
+- Filter the harness list with `--type official_tool|infrastructure`; render as a quota box or `--output json`.
+
+## [1.24.0] - 2026-09-11
+
+### Added
+
+- Sandbox instance and template lifecycle commands, with automatic build polling and `--async` submission.
+- `bl sandbox official-images` and template `--image` presets for Code Interpreter, Browser, and All-in-One.
+- `bl sandbox file upload` uploads template mount files with `source=sandbox_template`; use the returned File ID in `mntConfig`.
+- Sandbox supports shared `--base-url`, environment and Profile configuration, with workspace-based endpoint fallback.
+- Dedicated `bailian-sandbox` Skill with command references and instance connection guidance.
+
+### Fixed
+
+- Preserve submitted `templateID` and `buildID` when template-build polling fails, so users can check the existing build before resubmitting.
+
+### Security
+
+- Sandbox REST calls use Bailian Bearer authentication without an E2B SDK or E2B API key. Connection credentials and dry-run environment values are redacted by default.
+
+## [1.23.0] - 2026-09-10
+
+### Added
+
+- **Profile-level watermark control** — configure `watermark` with `bl config set --key watermark --value true|false` to control the default watermark behavior for image generation and editing, video generation and editing, and reference-to-video commands.
+- **ASR accuracy controls** — `bl speech recognize` now supports instant hot words with `--vocabulary`, contextual word enhancement with `--context`, and reusable pre-built vocabularies with `--vocabulary-id` for supported ASR models.
+- **Speech vocabulary management** — added `bl speech vocabulary create|list|get|update|delete` to manage reusable pre-built hot-word vocabularies.
+
 ## [1.22.0] - 2026-09-08
 
 ### Changed

@@ -1,7 +1,8 @@
 /**
  * End-user binary download base (OSS). CI publishes release assets and rolling
- * channel manifests here directly (tools/release/lib/oss-direct-upload.mjs);
- * no external FC is involved.
+ * channel manifests here via the FC release channel
+ * (tools/release/lib/oss-direct-upload.mjs): the runner uploads through
+ * FC-presigned URLs and holds no OSS credentials itself.
  *
  * Layout under the base:
  *   v<version>/<asset>.zip —— per-version zip (Windows installer, `bl update`, old Unix install.sh)

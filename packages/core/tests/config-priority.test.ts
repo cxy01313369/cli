@@ -5,6 +5,7 @@ import {
   resolveApiKey,
   resolveConsole,
   resolveModelBaseUrl,
+  resolveModelBaseUrlState,
   resolveOpenApi,
 } from "../src/auth/resolver.ts";
 import { getModelProfilePreset } from "../src/config/profile-presets.ts";
@@ -79,6 +80,14 @@ test("default_speech_recognition_model 从配置文件进入运行时 Settings",
   expect(resolve({ file }).defaultSpeechRecognitionModel).toBe("qwen-audio-3.0-asr-flash");
 });
 
+test("watermark 从配置文件进入 Settings，缺省时保持合规默认值 true", () => {
+  expect(parseConfigFile({ watermark: false }).watermark).toBe(false);
+  expect(parseConfigFile({ watermark: true }).watermark).toBe(true);
+  expect(parseConfigFile({ watermark: "false" }).watermark).toBeUndefined();
+  expect(resolve({ file: { watermark: false } }).watermark).toBe(false);
+  expect(resolve({}).watermark).toBe(true);
+});
+
 test("baseUrl:flag > env > file > 默认，所有来源统一归一化", () => {
   const flags = { baseUrl: "https://flag.example.com/compatible-mode/v1?source=flag" };
   const env = { DASHSCOPE_BASE_URL: "https://env.example.com/apps/anthropic#env" };
@@ -96,6 +105,24 @@ test("baseUrl:非法 flag/env 在 resolver 边界报 usage error", () => {
   expect(() =>
     resolveModelBaseUrl(src({ env: { DASHSCOPE_BASE_URL: "file:///tmp/model" } })),
   ).toThrow(/Invalid model base URL/);
+});
+
+test("baseUrl state distinguishes an implicit default from an explicitly configured default origin", () => {
+  const defaultOrigin = "https://dashscope.aliyuncs.com";
+  expect(resolveModelBaseUrlState(src({}))).toEqual({
+    baseUrl: defaultOrigin,
+    baseUrlIsDefault: true,
+  });
+  for (const sources of [
+    src({ flags: { baseUrl: defaultOrigin } }),
+    src({ env: { DASHSCOPE_BASE_URL: defaultOrigin } }),
+    src({ file: { base_url: defaultOrigin } }),
+  ]) {
+    expect(resolveModelBaseUrlState(sources)).toEqual({
+      baseUrl: defaultOrigin,
+      baseUrlIsDefault: false,
+    });
+  }
 });
 
 test("命名 config 仍保持 flag > env > selected file", () => {
