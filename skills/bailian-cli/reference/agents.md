@@ -1,4 +1,4 @@
-# `bl security` commands
+# `bl agents` commands
 
 > Auto-generated from `packages/cli/src/commands.ts`. Do not edit by hand.
 > Regenerate: `pnpm --filter bailian-cli run generate:reference`.
@@ -7,21 +7,21 @@ Index: [index.md](index.md)
 
 ## Commands in this group
 
-| Command                | Authentication | Description                                                 |
-| ---------------------- | -------------- | ----------------------------------------------------------- |
-| `bl security alerts`   | API Key        | List Agent security alerts                                  |
-| `bl security overview` | API Key        | Show the Agent security protection overview (last 24 hours) |
+| Command                       | Authentication | Description                                                 |
+| ----------------------------- | -------------- | ----------------------------------------------------------- |
+| `bl agents security alerts`   | API Key        | List Agent security alerts                                  |
+| `bl agents security overview` | API Key        | Show the Agent security protection overview (last 24 hours) |
 
 ## Command details
 
-### `bl security alerts`
+### `bl agents security alerts`
 
-| Field              | Value                        |
-| ------------------ | ---------------------------- |
-| **Name**           | `security alerts`            |
-| **Description**    | List Agent security alerts   |
-| **Authentication** | API Key                      |
-| **Usage**          | `bl security alerts [flags]` |
+| Field              | Value                               |
+| ------------------ | ----------------------------------- |
+| **Name**           | `agents security alerts`            |
+| **Description**    | List Agent security alerts          |
+| **Authentication** | API Key                             |
+| **Usage**          | `bl agents security alerts [flags]` |
 
 #### Flags
 
@@ -53,29 +53,29 @@ Index: [index.md](index.md)
 #### Examples
 
 ```bash
-bl security alerts --workspace-id ws-xxx
+bl agents security alerts --workspace-id ws-xxx
 ```
 
 ```bash
-bl security alerts --risk-level high --page-size 50
+bl agents security alerts --risk-level high --page-size 50
 ```
 
 ```bash
-bl security alerts --asset-type agent --app-name "demo app" --output json
+bl agents security alerts --asset-type agent --app-name "demo app" --output json
 ```
 
 ```bash
-bl security alerts --status-list unhandled --status-list handling
+bl agents security alerts --status-list unhandled --status-list handling
 ```
 
-### `bl security overview`
+### `bl agents security overview`
 
 | Field              | Value                                                       |
 | ------------------ | ----------------------------------------------------------- |
-| **Name**           | `security overview`                                         |
+| **Name**           | `agents security overview`                                  |
 | **Description**    | Show the Agent security protection overview (last 24 hours) |
 | **Authentication** | API Key                                                     |
-| **Usage**          | `bl security overview [flags]`                              |
+| **Usage**          | `bl agents security overview [flags]`                       |
 
 #### Flags
 
@@ -95,9 +95,9 @@ bl security alerts --status-list unhandled --status-list handling
 #### Examples
 
 ```bash
-bl security overview --workspace-id ws-xxx
+bl agents security overview --workspace-id ws-xxx
 ```
 
 ```bash
-bl security overview --workspace-id ws-xxx --output json
+bl agents security overview --workspace-id ws-xxx --output json
 ```

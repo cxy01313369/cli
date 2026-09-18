@@ -88,8 +88,8 @@ export const MCP_ROUTES: E2eRouteExports = {
 export const SEARCH_WEB_ROUTES: E2eRouteExports = { "search web": "searchWeb" };
 
 export const SECURITY_ROUTES: E2eRouteExports = {
-  "security overview": "securityOverview",
-  "security alerts": "securityAlerts",
+  "agents security overview": "securityOverview",
+  "agents security alerts": "securityAlerts",
 };
 
 export const PIPELINE_ROUTES: E2eRouteExports = {
