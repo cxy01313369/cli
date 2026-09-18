@@ -33,8 +33,9 @@ defineCommand({ auth }) → runtime/authStage → ctx.client → command.run(ctx
 
 `~/.bailian/config.json` 可同时保存 `api_key`、`access_token` 与 `access_key_*`。登录任一种方式不得删除另一种:
 
-- `bl auth login --api-key ...` 更新 `api_key`;显式 `base_url` 会一并写入，所选命名 Profile 若命中内置套餐预设（当前为 `token-plan`），则在尚未保存 `base_url` 时补写预设地址，并把该预设的默认模型物化写入。API Key 落盘成功后，`api_key_capabilities` 保留已有项并追加当前 preset 中缺少的项，不自动删除任何已有能力；无 preset 的自定义 Profile 不做合并。登录仍不得删除其他鉴权域的凭证
-- `bl auth login --console` 只更新 `access_token` 以及回调携带的 console 作用域字段
+- `bl auth login --api-key ...` 先通过只读 `GET /models` 校验 Key，校验成功后才原子写入 `api_key` 与实际匹配的 `base_url`。显式 `--base-url` 只校验该站点，不自动改写；未显式指定时，普通 `sk-*` / `sk-ws-*` 按“当前 Profile 已保存的同类站点 → 基于 `workspace_id` 构造的各地域 Workspace 专属站点 → 公共地域”顺序选择首个成功结果，`sk-sp-*` 并行探测国内站与新加坡 Token Plan，其他格式同时尝试两类候选。所有候选明确拒绝时返回 `AUTH`；网络、超时、非 JSON 或 5xx 视为校验无法确定并透传原错误。任一失败都不落盘、不激活 Profile
+- 未显式传 `--config` 时，`sk-sp-*` 自动写入并激活 `token-plan`；普通 `sk-*` / `sk-ws-*` 仅在当前为 `token-plan` 时改写并激活 `default`，否则保留当前 Profile；其他格式不自动切换。显式 `--config` 始终优先。`sk-sp-*` 无论写入哪个 Profile 都会携带 Token Plan 的预设默认模型，并在保留已有项的基础上补齐 `api_key_capabilities`，不自动删除任何已有能力。登录仍不得删除其他鉴权域的凭证
+- `bl auth login --console` 更新 `access_token` 以及回调携带的 console 作用域字段；若所选 Profile 没有模型 API Key，会要求控制台页面创建并回传一个普通 API Key 与 Base URL 一并保存。该回调结果不重复执行 `/models` 校验，且不会创建或配置 Token Plan
 - `bl auth login --open-api ...` 更新 `access_key_id` / `access_key_secret`,同时会调用 OpenAPI 生成 CLI `access_token` 并一并写入;即一次 `--open-api` 登录同时产生 `openapi` 与 `console` 域凭证
 - `bl auth logout --console` 只清 `access_token`
 - `bl auth logout --open-api` 只清 `access_key_id` / `access_key_secret` / `security_token`
@@ -62,17 +63,19 @@ defineCommand({ auth }) → runtime/authStage → ctx.client → command.run(ctx
 `bl managed-agent *` 按调用链分两层:
 
 - **离线命令** — `init`、`validate`、`state list/show/rm`:`auth: "none"`，只读写本地文件，无需登录;引擎侧传 `credentials: "none"` 跳过凭证断言
-- **联网命令** — `plan`、`apply`、`destroy`、`state import`、`skill-list`、全部 `session *`:统一声明 `auth: "apiKey"` 硬门禁 —— 无论目标 provider 是谁，authStage 都经 `resolveApiKey(sources)` 解析 bailian 凭证(flag > env > active profile config)，缺失报统一 AUTH;引擎层 `assertProviderCredentials` 再对 agents.yaml 里**全部已声明 provider** 的空 key 拦截并给 provider 专属 hint。例外:`plan --no-refresh` / `plan --dry-run` 传 `credentials: "none"` 并强制 `refresh: false`（不联网、不回写 state，不查 provider key），其中 `--dry-run` 连登录也不要求（authStage 的 dry-run 豁免），`--no-refresh` 仍需登录。
+- **联网命令** — `plan`、`apply`、`destroy`、`state import`、`skill-list`、全部 `session *`:统一声明 `auth: "apiKey"` 硬门禁，authStage 经 `resolveApiKey(sources)` 解析 Bailian 凭证(flag > env > active profile config)，缺失报统一 AUTH;引擎层再断言 Bailian key 非空。例外:`plan --no-refresh` / `plan --dry-run` 传 `credentials: "none"` 并强制 `refresh: false`（不联网、不回写 state，不查 provider key），其中 `--dry-run` 连登录也不要求（authStage 的 dry-run 豁免），`--no-refresh` 仍需登录。
+
+`bl managed-agent` 是 Bailian-only 产品入口：命令不暴露 `--provider`，`init` 只生成 `providers.bailian`，所有远端调用固定传 `provider: "bailian"`。`resolveAgentProjectConfig` 在创建 SDK runtime 前通过 `assertBailianOnlyProviders` 拒绝包含非 Bailian Provider 的手写配置；共享 `@openagentpack/sdk` 仍可保留多 Provider 能力。
 
 凭证不以真实值写入 `process.env`，而是经 `packages/commands/src/commands/managed-agent/_engine/` 的**内存注入管道**(`resolveAgentProjectConfig`)注入 SDK，管道五步:
 
-1. `prepareProviderEnv()` — 先 `bootstrapRuntimeCredentialsSync()`(SDK 把 `.env` / `~/.agents/config.json` 灌进 env，服务 claude/ark/qoder 等非 bailian provider)，再把全部凭证类 env(`CREDENTIAL_ENV_KEYS`，含别名)中仍为 undefined 的占位为 `""`，使 agents.yaml 插值不因缺变量抛错
-2. `resolveProjectConfig` — 插值发生:bailian 插值拿到占位空串，claude/ark 拿到真实 env 值;随后 `normalizeInterpolatedProviderBlocks()` 把插值为空导致的 YAML `null` 归一为 `""`(避免离线命令下空 key 在 SDK zod 层报 "received null")
+1. `prepareProviderEnv()` — 调用 SDK 的凭证 bootstrap，再把凭证类 env(`CREDENTIAL_ENV_KEYS`，含兼容别名)中仍为 undefined 的项占位为 `""`，使 agents.yaml 插值阶段能够完成并由 CLI 输出明确的 Bailian-only 配置错误
+2. `resolveProjectConfig` — 完成插值；随后 `normalizeInterpolatedProviderBlocks()` 把插值为空导致的 YAML `null` 归一为 `""`，避免空 key 在 SDK zod 层提前报 "received null"
 3. `injectProviderCredentials()` — 用 `ctx.client.exportApiCredential()`(lint 限定 `managed-agent/_engine/**` 可用)覆写内存 config 对象的 bailian 块:有凭证时 `api_key` 无条件覆写;`base_url`(拼 `/api/v1/agentstudio` 后缀，无凭证时用 client 默认域名补齐以满足 schema)/`workspace_id`(取 `settings.workspaceId`)仅在引用且为空时填充
 4. `scrubCredentialEnv()` — 从 `process.env` 删除全部凭证变量(真实凭证此后只存于 config 对象 → provider adapter 实例内存，不驻留 env / 不被子进程继承)
-5. `assertProviderCredentials(providers)` — 任一已声明 provider 的 `api_key` 为空 → CLI 权威 `AUTH` 错误 + provider 专属 hint(取代 SDK 原始插值/zod 报错);离线命令传 `credentials: "none"` 整体跳过
+5. `assertBailianOnlyProviders(providers)` — 拒绝非 Bailian Provider；随后 `assertProviderCredentials(providers)` 在 Bailian `api_key` 为空时给出 CLI 权威 `AUTH` 错误和登录 hint；离线命令传 `credentials: "none"` 跳过 key 断言，但仍执行 Bailian-only 配置校验
 
-`bl auth login` 仅管理 bailian(DashScope)凭证;claude/ark/qoder 的 key 从 env(shell / `.env` / `~/.agents/config.json`)经插值进入 config 对象，同样被清扫。禁止命令层直接 `readConfigFile` 裸读凭证;bailian 字段以 CLI 鉴权链为唯一信源。
+禁止命令层直接 `readConfigFile` 裸读凭证；Bailian 字段以 CLI 鉴权链为唯一信源。SDK bootstrap 期间读取到的兼容凭证变量也会在配置解析后统一清扫。
 
 ## 必查清单
 

@@ -1,5 +1,5 @@
 import { defineCommand, deleteFineTune, type FlagsDef } from "bailian-cli-core";
-import { emitResult, emitBare, confirmDangerousAction } from "bailian-cli-runtime";
+import { emitResult, emitBare } from "bailian-cli-runtime";
 
 const DELETE_FLAGS = {
   jobId: {
@@ -17,7 +17,14 @@ const DELETE_FLAGS = {
 export default defineCommand({
   description: { "en-US": "Delete a fine-tune job record", "zh-CN": "删除微调任务记录" },
   auth: "apiKey",
-  usageArgs: "--job-id <id> [--yes]",
+  risk: {
+    level: "high",
+    message: {
+      "en-US": "This permanently deletes the specified fine-tune job record and cannot be undone.",
+      "zh-CN": "该操作会永久删除指定的微调任务记录，且无法撤销。",
+    },
+  },
+  usageArgs: "--job-id <id>",
   flags: DELETE_FLAGS,
   exampleArgs: ["--job-id ft-xxx", "--job-id ft-xxx --dry-run", "--job-id ft-xxx --yes"],
   notes: [
@@ -39,11 +46,6 @@ export default defineCommand({
       emitResult({ action: "finetune.delete", job_id: jobId }, "json");
       return;
     }
-
-    await confirmDangerousAction(
-      `Delete fine-tune job record ${jobId}.\nThe job record is permanently removed. This cannot be undone.`,
-      flags.yes ?? false,
-    );
 
     const response = await deleteFineTune(ctx.client, jobId);
 

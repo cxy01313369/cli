@@ -6,7 +6,7 @@ import {
   ExitCode,
   type FlagsDef,
 } from "bailian-cli-core";
-import { emitResult, emitBare, confirmDangerousAction } from "bailian-cli-runtime";
+import { emitResult, emitBare } from "bailian-cli-runtime";
 
 const DELETE_FLAGS = {
   deployedModel: {
@@ -44,14 +44,15 @@ export default defineCommand({
     "zh-CN": "删除模型部署（状态必须为 STOPPED 或 FAILED）",
   },
   auth: "apiKey",
-  usageArgs: "--deployed-model <id> [--skip-precheck] [--yes]",
-  flags: DELETE_FLAGS,
-  notes: [
-    {
-      "en-US": "Irreversible — the deployment is permanently destroyed.",
-      "zh-CN": "该操作不可撤销——部署将被永久销毁。",
+  risk: {
+    level: "high",
+    message: {
+      "en-US": "This permanently deletes the specified model deployment and cannot be undone.",
+      "zh-CN": "该操作会永久删除指定的模型部署，且无法撤销。",
     },
-  ],
+  },
+  usageArgs: "--deployed-model <id> [--skip-precheck]",
+  flags: DELETE_FLAGS,
   exampleArgs: [
     "--deployed-model dep-...",
     "--deployed-model dep-... --dry-run",
@@ -86,11 +87,6 @@ export default defineCommand({
         // If the get itself failed (e.g. not found), let the DELETE call surface the real error.
       }
     }
-
-    await confirmDangerousAction(
-      `Delete deployment ${deployedModel}.\nThe deployment is permanently destroyed. This cannot be undone.`,
-      flags.yes ?? false,
-    );
 
     const response = await deleteDeployment(ctx.client, deployedModel);
 

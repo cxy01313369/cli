@@ -222,6 +222,31 @@ describe.skipIf(!isDashScopeE2EReady())("e2e: deploy (offline)", () => {
   });
 });
 
+describe("e2e: deploy high-risk confirmation", () => {
+  test("deploy delete --help 展示 runtime 注入的 --yes", async () => {
+    const { stderr, exitCode } = await runCommandE2e(DEPLOY_ROUTES, ["deploy", "delete", "--help"]);
+    expect(exitCode, stderr).toBe(0);
+    expect(stderr).toMatch(/--yes/i);
+  });
+
+  test("deploy delete 无 --yes 返回确认请求 (7)", async () => {
+    const { stderr, exitCode } = await runCommandE2e(DEPLOY_ROUTES, [
+      "deploy",
+      "delete",
+      "--deployed-model",
+      "dep-xxx",
+      "--api-key",
+      "e2e-dummy-key",
+      "--output",
+      "json",
+    ]);
+    expect(exitCode).toBe(7);
+    expect(JSON.parse(stderr)).toMatchObject({
+      error: { code: 7, type: "requires_confirmation" },
+    });
+  });
+});
+
 describe.skipIf(!isDashScopeE2EReady())("e2e: deploy (DashScope)", () => {
   /**
    * 不同开发者的 key 状态不一：可能鉴权失败、可能账号下没有任何部署记录、

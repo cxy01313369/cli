@@ -1,5 +1,5 @@
 import { defineCommand, detectOutputFormat, effectiveConsoleGatewayConfig } from "bailian-cli-core";
-import { emitResult, confirmDangerousAction } from "bailian-cli-runtime";
+import { emitResult } from "bailian-cli-runtime";
 import { parseCommaList } from "../shared/params.ts";
 import { ensureAlertReady } from "./shared.ts";
 
@@ -53,11 +53,6 @@ export default defineCommand({
     }
 
     await ensureAlertReady(ctx.client, settings.workspaceId, ctx.identity.binName, settings);
-
-    await confirmDangerousAction(
-      `Delete ${reqDTO.ruleIds.length} alert rule(s): ${reqDTO.ruleIds.join(", ")}.\nThe rules are permanently removed. This cannot be undone.`,
-      flags.yes ?? false,
-    );
 
     await ctx.client.console(DELETE_RULES_API, { reqDTO });
 
