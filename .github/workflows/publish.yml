@@ -87,9 +87,6 @@ jobs:
     if: inputs.mode == 'channel' && inputs.package != 'bailian-kb-dsh'
     name: publish channel (${{ inputs.package }}) to npm + binary
     runs-on: ubuntu-latest
-    # Same environment as stable so BAILIAN_OSS_* (environment secrets) inject.
-    # Without this, channel silently skips OSS and install.sh keeps the old CDN pointer.
-    environment: production
     permissions:
       contents: write # create prerelease GitHub Release with binary assets
       id-token: write # OIDC for npm Trusted Publishing + provenance
