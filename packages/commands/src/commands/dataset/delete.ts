@@ -8,10 +8,6 @@ const DELETE_FLAGS = {
     description: { "en-US": "Dataset file ID (required)", "zh-CN": "数据集文件 ID（必填）" },
     required: true,
   },
-  yes: {
-    type: "switch",
-    description: { "en-US": "Skip the confirmation prompt", "zh-CN": "跳过确认提示" },
-  },
 } satisfies FlagsDef;
 
 export default defineCommand({

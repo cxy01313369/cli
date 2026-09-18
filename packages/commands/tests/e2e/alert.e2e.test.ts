@@ -170,7 +170,7 @@ describe("e2e: alert", () => {
     expect(stderr).toMatch(/--yes/i);
   });
 
-  test("alert delete 非 TTY 无 --yes 报 USAGE (2)", async () => {
+  test("alert delete 非 TTY 无 --yes 返回确认请求 (7)", async () => {
     // 确认门先于 console 凭证解析与任何网络请求触发
     const { stderr, exitCode } = await runCommandE2e(ALERT_ROUTES, [
       "alert",
@@ -178,7 +178,7 @@ describe("e2e: alert", () => {
       "--rule-id",
       "789",
     ]);
-    expect(exitCode).toBe(2);
+    expect(exitCode).toBe(7);
     expect(stderr).toMatch(/--yes/);
   });
 
@@ -349,7 +349,7 @@ describe("e2e: alert", () => {
     expect(stderr).toMatch(/--yes/i);
   });
 
-  test("alert template delete 非 TTY 无 --yes 报 USAGE (2)", async () => {
+  test("alert template delete 非 TTY 无 --yes 返回确认请求 (7)", async () => {
     const { stderr, exitCode } = await runCommandE2e(ALERT_ROUTES, [
       "alert",
       "template",
@@ -357,7 +357,7 @@ describe("e2e: alert", () => {
       "--template-id",
       "123",
     ]);
-    expect(exitCode).toBe(2);
+    expect(exitCode).toBe(7);
     expect(stderr).toMatch(/--yes/);
   });
 

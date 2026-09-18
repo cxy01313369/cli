@@ -207,19 +207,6 @@ describe.skipIf(!isDashScopeE2EReady())("e2e: deploy (offline)", () => {
     expect(exitCode, stderr).toBe(0);
     expect(stderr).toMatch(/--yes/i);
   });
-
-  test("deploy delete 非 TTY 无 --yes 报 USAGE (2)", async () => {
-    // --skip-precheck 保证确认门在发任何网络请求前触发
-    const { stderr, exitCode } = await runCommandE2e(DEPLOY_ROUTES, [
-      "deploy",
-      "delete",
-      "--deployed-model",
-      "dep-xxx",
-      "--skip-precheck",
-    ]);
-    expect(exitCode).toBe(2);
-    expect(stderr).toMatch(/--yes/);
-  });
 });
 
 describe("e2e: deploy high-risk confirmation", () => {

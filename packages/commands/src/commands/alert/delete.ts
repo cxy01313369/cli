@@ -11,6 +11,13 @@ export default defineCommand({
     "zh-CN": "删除模型告警规则",
   },
   auth: "console",
+  risk: {
+    level: "high",
+    message: {
+      "en-US": "This permanently deletes the specified alert rules and cannot be undone.",
+      "zh-CN": "该操作会永久删除指定的告警规则，且无法撤销。",
+    },
+  },
   usageArgs: "--rule-id <id>[,<id>...] [--yes]",
   flags: {
     ruleId: {
@@ -21,10 +28,6 @@ export default defineCommand({
         "en-US": "Rule ID(s) to delete, comma-separated",
         "zh-CN": "要删除的规则 ID，多个以逗号分隔",
       },
-    },
-    yes: {
-      type: "switch",
-      description: { "en-US": "Skip the confirmation prompt", "zh-CN": "跳过确认提示" },
     },
   },
   exampleArgs: ["--rule-id 789", "--rule-id 789,790 --dry-run", "--rule-id 789 --yes"],

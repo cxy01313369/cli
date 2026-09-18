@@ -25,10 +25,6 @@ const DELETE_FLAGS = {
       "zh-CN": "跳过本地 STOPPED/FAILED 状态预检查",
     },
   },
-  yes: {
-    type: "switch",
-    description: { "en-US": "Skip the confirmation prompt", "zh-CN": "跳过确认提示" },
-  },
 } satisfies FlagsDef;
 
 /**

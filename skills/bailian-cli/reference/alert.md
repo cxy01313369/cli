@@ -79,19 +79,23 @@ bl alert create --name test --template-id 123 --model qwen3.6-plus --dry-run
 
 ### `bl alert delete`
 
-| Field              | Value                                              |
-| ------------------ | -------------------------------------------------- |
-| **Name**           | `alert delete`                                     |
-| **Description**    | Delete model alert rules                           |
-| **Authentication** | Console                                            |
-| **Usage**          | `bl alert delete --rule-id <id>[,<id>...] [--yes]` |
+| Field              | Value                                                                    |
+| ------------------ | ------------------------------------------------------------------------ |
+| **Name**           | `alert delete`                                                           |
+| **Description**    | Delete model alert rules                                                 |
+| **Authentication** | Console                                                                  |
+| **Usage**          | `bl alert delete --rule-id <id>[,<id>...] [--yes]`                       |
+| **Risk**           | `high`                                                                   |
+| **Risk message**   | This permanently deletes the specified alert rules and cannot be undone. |
+
+> **Agent safety:** Never add `--yes` automatically. On `type="requires_confirmation"`, stop and ask for explicit user confirmation of the same action and scope.
 
 #### Flags
 
 | Flag                           | Type   | Required | Description                                              |
 | ------------------------------ | ------ | -------- | -------------------------------------------------------- |
 | `--rule-id <id>[,<id>...]`     | string | yes      | Rule ID(s) to delete, comma-separated                    |
-| `--yes`                        | switch | no       | Skip the confirmation prompt                             |
+| `--yes`                        | switch | no       | Confirm this high-risk operation                         |
 | `--console-region <region>`    | string | no       | Console gateway region (e.g. cn-beijing, ap-southeast-1) |
 | `--console-site <site>`        | string | no       | Console site: domestic, international                    |
 | `--console-switch-agent <uid>` | number | no       | Switch agent UID for delegated access                    |
@@ -112,6 +116,7 @@ bl alert delete --rule-id 789,790 --dry-run
 ```
 
 ```bash
+# Only after explicit user confirmation:
 bl alert delete --rule-id 789 --yes
 ```
 
@@ -331,19 +336,23 @@ bl alert template create --name test --condition 'model_call_count:sum:>:100:60'
 
 ### `bl alert template delete`
 
-| Field              | Value                                                                |
-| ------------------ | -------------------------------------------------------------------- |
-| **Name**           | `alert template delete`                                              |
-| **Description**    | Delete custom alert templates (official templates cannot be deleted) |
-| **Authentication** | Console                                                              |
-| **Usage**          | `bl alert template delete --template-id <id>[,<id>...] [--yes]`      |
+| Field              | Value                                                                        |
+| ------------------ | ---------------------------------------------------------------------------- |
+| **Name**           | `alert template delete`                                                      |
+| **Description**    | Delete custom alert templates (official templates cannot be deleted)         |
+| **Authentication** | Console                                                                      |
+| **Usage**          | `bl alert template delete --template-id <id>[,<id>...] [--yes]`              |
+| **Risk**           | `high`                                                                       |
+| **Risk message**   | This permanently deletes the specified alert templates and cannot be undone. |
+
+> **Agent safety:** Never add `--yes` automatically. On `type="requires_confirmation"`, stop and ask for explicit user confirmation of the same action and scope.
 
 #### Flags
 
 | Flag                           | Type   | Required | Description                                              |
 | ------------------------------ | ------ | -------- | -------------------------------------------------------- |
 | `--template-id <id>[,<id>...]` | string | yes      | Template ID(s) to delete, comma-separated                |
-| `--yes`                        | switch | no       | Skip the confirmation prompt                             |
+| `--yes`                        | switch | no       | Confirm this high-risk operation                         |
 | `--console-region <region>`    | string | no       | Console gateway region (e.g. cn-beijing, ap-southeast-1) |
 | `--console-site <site>`        | string | no       | Console site: domestic, international                    |
 | `--console-switch-agent <uid>` | number | no       | Switch agent UID for delegated access                    |
@@ -364,6 +373,7 @@ bl alert template delete --template-id 123,124 --dry-run
 ```
 
 ```bash
+# Only after explicit user confirmation:
 bl alert template delete --template-id 123 --yes
 ```
 

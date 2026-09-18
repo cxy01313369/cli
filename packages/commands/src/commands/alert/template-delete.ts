@@ -16,6 +16,13 @@ export default defineCommand({
     "zh-CN": "删除自定义告警模板（官方模板不可删除）",
   },
   auth: "console",
+  risk: {
+    level: "high",
+    message: {
+      "en-US": "This permanently deletes the specified alert templates and cannot be undone.",
+      "zh-CN": "该操作会永久删除指定的告警模板，且无法撤销。",
+    },
+  },
   usageArgs: "--template-id <id>[,<id>...] [--yes]",
   flags: {
     templateId: {
@@ -26,10 +33,6 @@ export default defineCommand({
         "en-US": "Template ID(s) to delete, comma-separated",
         "zh-CN": "要删除的模板 ID，多个以逗号分隔",
       },
-    },
-    yes: {
-      type: "switch",
-      description: { "en-US": "Skip the confirmation prompt", "zh-CN": "跳过确认提示" },
     },
   },
   exampleArgs: ["--template-id 123", "--template-id 123,124 --dry-run", "--template-id 123 --yes"],

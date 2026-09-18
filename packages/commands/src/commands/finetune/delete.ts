@@ -8,10 +8,6 @@ const DELETE_FLAGS = {
     description: { "en-US": "Fine-tune job ID (required)", "zh-CN": "微调任务 ID（必填）" },
     required: true,
   },
-  yes: {
-    type: "switch",
-    description: { "en-US": "Skip the confirmation prompt", "zh-CN": "跳过确认提示" },
-  },
 } satisfies FlagsDef;
 
 export default defineCommand({
