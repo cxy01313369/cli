@@ -6,6 +6,22 @@
 
 [English](CHANGELOG.md) · [README](README.zh.md) · [参与贡献](CONTRIBUTING.zh.md)
 
+## [1.27.0] - 2026-09-18
+
+### 新增
+
+- **监控、日志与告警** —— 新增 `bl monitor`、`bl log` 和 `bl alert` 命令组，支持查看模型调用量、失败、耗时、Token 用量、审计与推理日志、调用链，配置数据投递并管理告警。
+- **模型发现与示例代码** —— 新增 `bl model search`，可按相关度搜索模型目录；新增 `bl model code`，可获取开箱即用的 SDK 调用示例。
+
+### 变更
+
+- **模型目录** —— `bl model list` 新增输入/输出模态筛选，默认隐藏已下线模型，并可通过 `--include-deprecated` 将其包含在结果中。
+
+### 修复
+
+- **语音音色** —— `bl speech synthesize --list-voices` 现在支持查看 `qwen-audio-3.0-tts-plus` 和 `qwen-audio-3.0-tts-flash` 的内置音色及对应文档。
+- **Unix 二进制分发** —— 为 macOS 和 Linux 增加带校验和的 `.tar.gz` 发布资产，使安装流程可不依赖 `unzip`，同时保留 `.zip` 资产以兼容现有流程。
+
 ## [1.26.0] - 2026-09-17
 
 ### 变更
