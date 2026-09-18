@@ -250,6 +250,13 @@ export async function releaseBinaryArtifacts(rawOptions = {}) {
   // (newer-version guard). Throws on failure — CI is the only OSS writer.
   const plans = ossMirrorPlans({ dir, version, mode, files });
   const mirror = await mirrorReleaseAssetsToOss({ plans, dryRun });
+  if (mode === "channel" && mirror.skipped && !dryRun) {
+    throw new Error(
+      "Channel publish must update OSS sync-release.json, but BAILIAN_OSS_AK/SK are unset. " +
+        "Attach the production environment (or repository OSS secrets) to the channel job; " +
+        "do not treat a GitHub-only Release as a successful CDN publish.",
+    );
+  }
   if (mode === "stable" && !mirror.skipped) {
     await maintainReleaseManifest({
       tag: `v${version}`,

@@ -30,10 +30,10 @@ publish-stable.mjs / publish-channel.mjs   ← 唯一发版入口
 
 两种模式：
 
-| 模式    | 用途                                                                                    | 触发方式                                     |
-| ------- | --------------------------------------------------------------------------------------- | -------------------------------------------- |
-| channel | npm dist-tag +（仅 bailian-cli）二进制 + CDN **一律**覆盖 `sync-release.json`           | mode=channel，channel 填 **npm dist-tag** 名 |
-| stable  | npm latest + GitHub Release `v<ver>` + CDN **`manifest.json`**（及 `latest.json` 别名） | mode=stable，需 production environment 审批  |
+| 模式    | 用途                                                                                    | 触发方式                                                                                              |
+| ------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| channel | npm dist-tag +（仅 bailian-cli）二进制 + CDN **一律**覆盖 `sync-release.json`           | mode=channel，channel 填 **npm dist-tag** 名；**与 stable 同样走 production environment**（OSS 密钥） |
+| stable  | npm latest + GitHub Release `v<ver>` + CDN **`manifest.json`**（及 `latest.json` 别名） | mode=stable，需 production environment 审批                                                           |
 
 可选 flag：`--skip-binary`（仅发 npm，紧急逃生）。
 
@@ -48,10 +48,10 @@ workflow 的 `channel` 输入**只决定 npm dist-tag**（如 `mcp` / `plugin` /
 
 ### channel 发布
 
-1. 在 GitHub 触发 Publish workflow，mode 选 `channel`，channel 填 npm dist-tag 名：
+1. 在 GitHub 触发 Publish workflow，mode 选 `channel`，channel 填 npm dist-tag 名。`publish-channel` 与 stable 一样走 **production** environment（OSS 密钥；若该 environment 开了 Required Reviewers，测试包也要审批）：
    - **`bailian-cli`**：npm 发到该 tag；二进制同时刷新 CDN `sync-release.json`（与 tag 名无关）。本机验证：`BAILIAN_CHANNEL=sync-release`。**先发二进制（zip+tar.gz 上齐）再发静态仓 `install.sh`**，避免新脚本去拉还不存在的 `.tar.gz`。
    - **`knowledge-studio-cli`**：仅 npm（自动跳过 binary，不碰 `sync-release.json`）
-2. CI 自动：生成 `0.0.0-beta-<sha7>-<YYYYMMDDHHMM>`（UTC 到分钟；同 commit 同分钟重跑会覆盖同号）→ 临时 bump → 自检 → **npm 发到 dist-tag** →（bailian-cli）**Bun 编二进制 + GH prerelease + 覆盖 `sync-release.json`** → 还原 package.json
+2. CI 自动：生成 `0.0.0-beta-<sha7>-<YYYYMMDDHHMM>`（UTC 到分钟；同 commit 同分钟重跑会覆盖同号）→ 临时 bump → 自检 → **npm 发到 dist-tag** →（bailian-cli）**Bun 编二进制 + GH prerelease + 覆盖 OSS `sync-release.json`** → 还原 package.json。OSS 密钥未注入时 channel 失败，不会只更新 GitHub。
 3. 对应脚本：`tools/release/publish-channel.mjs`
 
 ### stable 发布
@@ -90,6 +90,7 @@ node tools/release/publish-channel.mjs --channel test --knowledge --dry-run
 
 - **认证**：npm OIDC Trusted Publishing（无 token），需要 `id-token: write` 权限
 - **GitHub Release**：`contents: write` + `GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}`（stable / channel 均需）
+- **OSS**：`BAILIAN_OSS_*` 配在 **production** environment；`publish-stable` 与 `publish-channel` 都挂该 environment，否则 channel 拿不到密钥、公网 `sync-release.json` 不滚动
 - **Node 版本**：24（npm 11.5+ 才支持 OIDC token 交换）
 - **Bun**：`oven-sh/setup-bun`，版本钉死在 workflow 中
 - **Actions 版本**：checkout/setup-node/pnpm-action 均为 v6（Node 24 兼容）
@@ -125,17 +126,18 @@ node tools/release/publish-channel.mjs --channel test --knowledge --dry-run
 
 ## 常见漏点（基于历史踩坑）
 
-| 漏点                                                                | 后果                                                                               |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| 只升部分包,漏升 runtime/commands/kscli                              | 当前 check.mjs 按所选发布集合校验,但未选择 `knowledge-studio-cli` 时不会覆盖 kscli |
-| 新增发布包但没加 `tools/release/lib/packages.mjs`                   | CI 不会 bump/publish/校验该包                                                      |
-| cli 升版号但 core 没升                                              | check.mjs 会拦下                                                                   |
-| 发版漏更 CHANGELOG，或分类写成规范外的 `优化`/`Improved`            | 用户看不到本次变更，分类与历史不一致                                               |
-| `1.0.0` 当 beta 直接发                                              | 占了 `latest` tag，所有用户被强升，撤回成本极高                                    |
-| README 写的 bin 名实际 `package.json.bin` 没注册                    | 用户复制命令报 `command not found`                                                 |
-| Node 徽章与 `cli/package.json.engines` 不一致（当前应为 `>=18.17`） | 用户在声明外的 Node 上 `npm i` 被 engine 警告或直接失败                            |
-| npm Trusted Publisher 的 workflow filename 改了没同步               | OIDC 匹配不上，publish 报 404                                                      |
-| CI 用 Node 22（npm 10）跑 publish                                   | npm 10 不支持 OIDC token 交换，publish 报 404                                      |
-| stable 发布前没有升级版本号                                         | 所选发布集合的版本已全部存在于 npm，CI 明确报错并要求先升级版本号                  |
-| channel job 缺少 `contents: write`                                  | `gh release create` 失败                                                           |
-| stable 未先推 tag 就建 Release                                      | `--verify-tag` 失败                                                                |
+| 漏点                                                                | 后果                                                                                                          |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 只升部分包,漏升 runtime/commands/kscli                              | 当前 check.mjs 按所选发布集合校验,但未选择 `knowledge-studio-cli` 时不会覆盖 kscli                            |
+| 新增发布包但没加 `tools/release/lib/packages.mjs`                   | CI 不会 bump/publish/校验该包                                                                                 |
+| cli 升版号但 core 没升                                              | check.mjs 会拦下                                                                                              |
+| 发版漏更 CHANGELOG，或分类写成规范外的 `优化`/`Improved`            | 用户看不到本次变更，分类与历史不一致                                                                          |
+| `1.0.0` 当 beta 直接发                                              | 占了 `latest` tag，所有用户被强升，撤回成本极高                                                               |
+| README 写的 bin 名实际 `package.json.bin` 没注册                    | 用户复制命令报 `command not found`                                                                            |
+| Node 徽章与 `cli/package.json.engines` 不一致（当前应为 `>=18.17`） | 用户在声明外的 Node 上 `npm i` 被 engine 警告或直接失败                                                       |
+| npm Trusted Publisher 的 workflow filename 改了没同步               | OIDC 匹配不上，publish 报 404                                                                                 |
+| CI 用 Node 22（npm 10）跑 publish                                   | npm 10 不支持 OIDC token 交换，publish 报 404                                                                 |
+| stable 发布前没有升级版本号                                         | 所选发布集合的版本已全部存在于 npm，CI 明确报错并要求先升级版本号                                             |
+| channel job 未挂 `environment: production`                          | `BAILIAN_OSS_*` 只配在 production 时 channel 拿不到密钥；现已挂上。密钥仍缺则 channel 失败，避免只更新 GitHub |
+| channel job 缺少 `contents: write`                                  | `gh release create` 失败                                                                                      |
+| stable 未先推 tag 就建 Release                                      | `--verify-tag` 失败                                                                                           |
