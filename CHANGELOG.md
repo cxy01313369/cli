@@ -6,6 +6,22 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 [中文版](CHANGELOG.zh.md) · [README](README.md) · [Contributing](CONTRIBUTING.md)
 
+## [1.27.0] - 2026-09-18
+
+### Added
+
+- **Monitoring, logs, and alerts** — Added `bl monitor`, `bl log`, and `bl alert` command groups for model call statistics, failures, latency, token usage, audit and inference logs, traces, delivery configuration, and alert management.
+- **Model discovery and code samples** — Added `bl model search` for relevance-ranked catalog search and `bl model code` for ready-to-run SDK examples.
+
+### Changed
+
+- **Model catalog** — `bl model list` now supports input/output modality filters, hides offline models by default, and can include them with `--include-deprecated`.
+
+### Fixed
+
+- **Speech voices** — `bl speech synthesize --list-voices` now supports the built-in voices and documentation links for `qwen-audio-3.0-tts-plus` and `qwen-audio-3.0-tts-flash`.
+- **Unix binary distribution** — Added `.tar.gz` release assets and checksums for macOS and Linux, enabling installation without an `unzip` dependency while retaining `.zip` assets for compatibility.
+
 ## [1.26.0] - 2026-09-17
 
 ### Changed
