@@ -12,6 +12,7 @@ import {
   CAPABILITY_LABELS,
   PROTECTION_LABELS,
   SCAN_CARDS,
+  SECURITY_UI,
   WORKSPACE_FLAG,
   renderToggles,
   resolveSecurityHost,
@@ -58,7 +59,7 @@ export default defineCommand({
     },
   ],
   async run(ctx) {
-    const { settings } = ctx;
+    const { settings, localize } = ctx;
     const format = detectOutputFormat(settings.output);
     const endpoint = securityOverviewEndpoint(resolveSecurityHost(ctx));
 
@@ -70,7 +71,7 @@ export default defineCommand({
     const data = await securityGet<SecurityOverview>(ctx.client, endpoint);
     if (!data) {
       if (format === "json") emitResult({}, format);
-      else emitBare("Overview unavailable.");
+      else emitBare(localize(SECURITY_UI.overviewUnavailable));
       return;
     }
 
@@ -85,22 +86,28 @@ export default defineCommand({
       const stat = keys
         .map((key) => data[key] as SecurityScanStat | null | undefined)
         .find((value) => value !== undefined);
-      return { label, stat: stat ?? null };
+      return { label: localize(label), stat: stat ?? null };
     });
     const sum = (pick: (stat: SecurityScanStat) => number | null): number =>
       cards.reduce((total, card) => total + (card.stat ? (pick(card.stat) ?? 0) : 0), 0);
 
-    emitBare(`Scanned: ${sum((stat) => stat.scanned)}    Risks: ${sum((stat) => stat.hit)}`);
+    emitBare(
+      `${localize(SECURITY_UI.scannedLabel)}: ${sum((stat) => stat.scanned)}    ` +
+        `${localize(SECURITY_UI.risksLabel)}: ${sum((stat) => stat.hit)}`,
+    );
 
-    renderToggles("Capabilities", data.capabilities, CAPABILITY_LABELS);
-    renderToggles("Protection", data.protection, PROTECTION_LABELS);
+    renderToggles(localize, SECURITY_UI.capabilities, data.capabilities, CAPABILITY_LABELS);
+    renderToggles(localize, SECURITY_UI.protection, data.protection, PROTECTION_LABELS);
 
-    emitBare("\nDetections");
+    emitBare(`\n${localize(SECURITY_UI.detections)}`);
     for (const { label, stat } of cards) {
       if (!stat) {
-        emitBare(`  ${label}  (unavailable)`);
+        emitBare(`  ${label}  ${localize(SECURITY_UI.unavailable)}`);
       } else {
-        emitBare(`  ${label}  hit ${stat.hit ?? "-"} / scanned ${stat.scanned ?? "-"}`);
+        emitBare(
+          `  ${label}  ${localize(SECURITY_UI.hit)} ${stat.hit ?? "-"} / ` +
+            `${localize(SECURITY_UI.scanned)} ${stat.scanned ?? "-"}`,
+        );
       }
     }
   },

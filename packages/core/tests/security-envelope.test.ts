@@ -70,11 +70,14 @@ test("success with a null payload returns null, not an error", () => {
   expect(parseSecurityBody(dataV2Envelope(null))).toBeNull();
 });
 
-test("maps legacy 12000092 to the AUTH exit code", () => {
+test("maps 12000092 (service-linked-role permission) to GENERAL, not AUTH", () => {
+  // A service-linked-role permission failure is a server-side error: switching
+  // API Keys cannot fix it, so it must pass through as GENERAL (AGENTS.md §3),
+  // never AUTH (which would wrongly tell the user to re-login).
   const error = catchError(() =>
     parseSecurityBody('{"success":false,"errorCode":"12000092","errorMsg":"no permission"}'),
   );
-  expect(error.exitCode).toBe(ExitCode.AUTH);
+  expect(error.exitCode).toBe(ExitCode.GENERAL);
   expect(error.message).toContain("12000092");
 });
 
@@ -92,6 +95,21 @@ test("surfaces a DataV2 failure errorCode as a GENERAL error", () => {
   const error = catchError(() => parseSecurityBody(body));
   expect(error.exitCode).toBe(ExitCode.GENERAL);
   expect(error.message).toContain("12000093");
+});
+
+test("HTTP 200 failure envelope without DataV2 is not treated as a bare payload", () => {
+  // successResponse:false + data.success:false with no DataV2 wrapper must throw,
+  // not fall through to the bare-payload branch and render as a zero-risk success
+  // (Scanned: 0 / Risks: 0, exit code 0).
+  const body = JSON.stringify({
+    code: "200",
+    successResponse: false,
+    requestId: "req-2",
+    data: { success: false, errorCode: "12000094", errorMsg: "alert query failed" },
+  });
+  const error = catchError(() => parseSecurityBody(body));
+  expect(error.exitCode).toBe(ExitCode.GENERAL);
+  expect(error.message).toContain("12000094");
 });
 
 test("rejects a non-JSON body with the content type", () => {

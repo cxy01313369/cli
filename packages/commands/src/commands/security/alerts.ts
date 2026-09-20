@@ -7,7 +7,13 @@ import {
   type SecurityAlertList,
 } from "bailian-cli-core";
 import { emitResult, emitBare } from "bailian-cli-runtime";
-import { WORKSPACE_FLAG, renderAlert, resolveSecurityHost, setSecurityParam } from "./shared.ts";
+import {
+  SECURITY_UI,
+  WORKSPACE_FLAG,
+  renderAlert,
+  resolveSecurityHost,
+  setSecurityParam,
+} from "./shared.ts";
 
 const ASSET_TYPES = ["agent", "tool", "skill", "knowledge_base", "memory", "channel"] as const;
 
@@ -139,7 +145,7 @@ export default defineCommand({
     },
   ],
   async run(ctx) {
-    const { settings, flags } = ctx;
+    const { settings, flags, localize } = ctx;
     const format = detectOutputFormat(settings.output);
     const host = resolveSecurityHost(ctx);
 
@@ -169,33 +175,38 @@ export default defineCommand({
     const data = await securityGet<SecurityAlertList>(ctx.client, endpoint);
     const alerts = data?.data ?? [];
 
-    if (format === "json") {
-      emitResult(data ?? { stats: null, data: [], next_page: null }, format);
+    // --quiet wins over the output format: emit a bare, pipe-friendly list of
+    // alert IDs even when output=json is configured, so ID-driven pipelines
+    // (`bl agents security alerts --quiet | xargs …`) keep working.
+    if (settings.quiet) {
+      for (const alert of alerts) emitBare(alert.alert_id);
       return;
     }
 
-    if (settings.quiet) {
-      for (const alert of alerts) emitBare(alert.alert_id);
+    if (format === "json") {
+      emitResult(data ?? { stats: null, data: [], next_page: null }, format);
       return;
     }
 
     const stats = data?.stats;
     if (stats) {
       emitBare(
-        `Total: ${stats.total ?? "-"}    high: ${stats.high ?? "-"}    ` +
-          `medium: ${stats.medium ?? "-"}    low: ${stats.low ?? "-"}\n`,
+        `${localize(SECURITY_UI.total)}: ${stats.total ?? "-"}    ` +
+          `${localize(SECURITY_UI.high)}: ${stats.high ?? "-"}    ` +
+          `${localize(SECURITY_UI.medium)}: ${stats.medium ?? "-"}    ` +
+          `${localize(SECURITY_UI.low)}: ${stats.low ?? "-"}\n`,
       );
     }
 
     if (alerts.length === 0) {
-      emitBare("No alerts found.");
+      emitBare(localize(SECURITY_UI.noAlerts));
       return;
     }
 
-    for (const alert of alerts) renderAlert(alert);
+    for (const alert of alerts) renderAlert(localize, alert);
 
     if (data?.next_page) {
-      emitBare(`Next page cursor: ${data.next_page}`);
+      emitBare(`${localize(SECURITY_UI.nextPageCursor)}: ${data.next_page}`);
     }
   },
 });

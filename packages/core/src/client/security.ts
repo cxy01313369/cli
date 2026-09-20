@@ -54,9 +54,11 @@ function throwSecurityFailure(
       : "";
   throw new BailianError(
     `Security API failed: ${code} - ${errorMsg ?? "no message"}${bodySnippet}`,
-    // 12000092 (no permission to create the service-linked role) is an auth
-    // problem the caller can act on; everything else is a generic failure.
-    code === "12000092" ? ExitCode.AUTH : ExitCode.GENERAL,
+    // Server-side failures pass through as GENERAL per the repo error contract
+    // (AGENTS.md §3): the CLI does not re-classify backend error codes. 12000092
+    // is a service-linked-role permission problem that re-authenticating the API
+    // Key cannot fix, so it must NOT map to AUTH (which would prompt a re-login).
+    ExitCode.GENERAL,
     SECURITY_ERROR_HINTS[code],
     { rawResponse: rawResponse.slice(0, 500) },
   );
@@ -124,6 +126,19 @@ export function parseSecurityBody<T>(raw: string, contentType?: string | null): 
       );
     }
     return (root.data ?? null) as T | null;
+  }
+
+  // Envelope-level failure with no DataV2 payload: an HTTP 200 body may still
+  // carry successResponse:false / data.success:false (or a bare errorCode) when
+  // the gateway reports failure without the DataV2 wrapper. Check these markers
+  // BEFORE the bare-payload fallback, otherwise a failed response is rendered as
+  // a zero-risk success (Scanned: 0 / Risks: 0, exit code 0).
+  if (root) {
+    const bareErrorCode = firstNonEmptyString(data?.errorCode, root.errorCode);
+    const bareErrorMsg = firstNonEmptyString(data?.errorMsg, root.errorMsg);
+    const bareFailed =
+      root.successResponse === false || data?.success === false || bareErrorCode !== undefined;
+    if (bareFailed) throwSecurityFailure(bareErrorCode, bareErrorMsg, raw);
   }
 
   // Bare payload: the REST endpoint currently returns the business object
