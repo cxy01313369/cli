@@ -6,6 +6,16 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 [中文版](CHANGELOG.zh.md) · [README](README.md) · [Contributing](CONTRIBUTING.md)
 
+## [1.28.0] - 2026-09-20
+
+### Added
+
+- **Agent security commands** — `bl agents security overview` (protection overview for the last 24 hours) and `bl agents security alerts` (alert list with risk-level, asset-type, status, vendor, pagination and sorting filters). Both call the per-workspace AgentStudio host and honor the shared `text` / `json` / `--quiet` / `--dry-run` contract. The host is derived from `--workspace-id`, or overridden by `--base-url` / `DASHSCOPE_BASE_URL` / `auth login --base-url` pointed at a workspace or pre-release origin (e.g. `https://<workspace-id>.cn-beijing.maas.aliyuncs.com/api/v1/agentstudio`).
+
+### Internal
+
+- Add Agent security E2E coverage (help, missing-workspace usage error, dry-run host derivation and `--base-url` override, query-string filters, enum fast-fail) and generate the `bailian-cli` skill reference for the new `agents` group.
+
 ## [1.27.0] - 2026-09-18
 
 ### Added
@@ -23,14 +33,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 - **Unix binary distribution** — Added `.tar.gz` release assets and checksums for macOS and Linux, enabling installation without an `unzip` dependency while retaining `.zip` assets for compatibility.
 
 ## [1.26.0] - 2026-09-17
-
-### Added
-
-- **Agent security commands** — `bl agents security overview` (protection overview for the last 24 hours) and `bl agents security alerts` (alert list with risk-level, asset-type, status, vendor, pagination and sorting filters). Both call the per-workspace AgentStudio host and honor the shared `text` / `json` / `--quiet` / `--dry-run` contract. The host is derived from `--workspace-id`, or overridden by `--base-url` / `DASHSCOPE_BASE_URL` / `auth login --base-url` pointed at a workspace or pre-release origin (e.g. `https://<workspace-id>.cn-beijing.maas.aliyuncs.com/api/v1/agentstudio`).
-
-### Internal
-
-- Add Agent security E2E coverage (help, missing-workspace usage error, dry-run host derivation and `--base-url` override, query-string filters, enum fast-fail) and generate the `bailian-cli` skill reference for the new `agents` group.
 
 ### Changed
 

@@ -6,6 +6,16 @@
 
 [English](CHANGELOG.md) · [README](README.zh.md) · [参与贡献](CONTRIBUTING.zh.md)
 
+## [1.28.0] - 2026-09-20
+
+### 新增
+
+- **Agent 安全命令** —— `bl agents security overview`（最近 24 小时的防护总览）与 `bl agents security alerts`（告警列表，支持风险等级、资产类型、状态、厂商、分页与排序等筛选）。两者均对接按 workspace 区分的 AgentStudio 域名，遵循统一的 `text` / `json` / `--quiet` / `--dry-run` 约定。域名默认由 `--workspace-id` 推导，也可通过 `--base-url` / `DASHSCOPE_BASE_URL` / `auth login --base-url` 指向某个 workspace 或预发源覆盖（例如 `https://<workspace-id>.cn-beijing.maas.aliyuncs.com/api/v1/agentstudio`）。
+
+### 内部
+
+- 补充 Agent 安全 E2E 覆盖（help、缺 workspace 的 usage 错误、dry-run 域名推导与 `--base-url` 覆盖、query string 筛选、枚举快失败），并为新的 `agents` 组生成 `bailian-cli` 技能 reference。
+
 ## [1.27.0] - 2026-09-18
 
 ### 新增
@@ -23,14 +33,6 @@
 - **Unix 二进制分发** —— 为 macOS 和 Linux 增加带校验和的 `.tar.gz` 发布资产，使安装流程可不依赖 `unzip`，同时保留 `.zip` 资产以兼容现有流程。
 
 ## [1.26.0] - 2026-09-17
-
-### 新增
-
-- **Agent 安全命令** —— `bl agents security overview`（最近 24 小时的防护总览）与 `bl agents security alerts`（告警列表，支持风险等级、资产类型、状态、厂商、分页与排序等筛选）。两者均对接按 workspace 区分的 AgentStudio 域名，遵循统一的 `text` / `json` / `--quiet` / `--dry-run` 约定。域名默认由 `--workspace-id` 推导，也可通过 `--base-url` / `DASHSCOPE_BASE_URL` / `auth login --base-url` 指向某个 workspace 或预发源覆盖（例如 `https://<workspace-id>.cn-beijing.maas.aliyuncs.com/api/v1/agentstudio`）。
-
-### 内部
-
-- 补充 Agent 安全 E2E 覆盖（help、缺 workspace 的 usage 错误、dry-run 域名推导与 `--base-url` 覆盖、query string 筛选、枚举快失败），并为新的 `agents` 组生成 `bailian-cli` 技能 reference。
 
 ### 变更
 
